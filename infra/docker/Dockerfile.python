@@ -1,0 +1,32 @@
+FROM python:3.12-slim-bookworm
+
+ARG SERVICE=cortex-server
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/.local/bin:$PATH" \
+    SERVICE=${SERVICE}
+
+COPY pyproject.toml uv.lock ./
+COPY libs/cortex-core libs/cortex-core
+COPY packages/module-platform packages/module-platform
+COPY packages/module-alfresco packages/module-alfresco
+COPY packages/module-ingestion packages/module-ingestion
+COPY packages/module-ai packages/module-ai
+COPY apps/cortex-server apps/cortex-server
+COPY apps/cortex-worker apps/cortex-worker
+
+RUN uv sync --package ${SERVICE} --no-dev
+
+COPY infra/docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+EXPOSE 8000 5555
+
+ENTRYPOINT ["/entrypoint.sh"]

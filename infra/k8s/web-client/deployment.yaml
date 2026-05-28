@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-client
+  namespace: cortex-monolith
+  labels:
+    app: web-client
+    app.kubernetes.io/component: frontend
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 30081
+  selector:
+    app: web-client
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-client
+  namespace: cortex-monolith
+  labels:
+    app: web-client
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-client
+  template:
+    metadata:
+      labels:
+        app: web-client
+        app.kubernetes.io/component: frontend
+    spec:
+      containers:
+        - name: web-client
+          image: cortex/web-client-monolith:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10

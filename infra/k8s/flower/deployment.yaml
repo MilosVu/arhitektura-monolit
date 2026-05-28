@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: flower
+  namespace: cortex-monolith
+  labels:
+    app: flower
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 5555
+      targetPort: 5555
+      nodePort: 30556
+  selector:
+    app: flower
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flower
+  namespace: cortex-monolith
+  labels:
+    app: flower
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flower
+  template:
+    metadata:
+      labels:
+        app: flower
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: flower
+          image: cortex/cortex-worker:latest
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: cortex-config
+          env:
+            - name: SERVICE
+              value: flower
+          ports:
+            - containerPort: 5555
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5555
+            initialDelaySeconds: 15
+            periodSeconds: 10

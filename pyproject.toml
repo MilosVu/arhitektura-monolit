@@ -1,0 +1,118 @@
+[project]
+name = "cortex-monolith"
+version = "0.1.0"
+description = "Cortex AI MVP mockup — modular monolith architecture"
+requires-python = ">=3.12"
+
+[tool.uv.workspace]
+members = [
+    "libs/cortex-core",
+    "packages/module-platform",
+    "packages/module-alfresco",
+    "packages/module-ingestion",
+    "packages/module-ai",
+    "apps/cortex-server",
+    "apps/cortex-worker",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "import-linter>=2.0",
+]
+
+[tool.importlinter]
+root_packages = [
+    "cortex_core",
+    "module_platform",
+    "module_alfresco",
+    "module_ingestion",
+    "module_ai",
+    "cortex_server",
+    "cortex_worker",
+]
+
+[[tool.importlinter.contracts]]
+name = "Module AI is independent"
+type = "forbidden"
+source_modules = ["module_ai"]
+forbidden_modules = [
+    "module_platform.api",
+    "module_platform.routes",
+    "module_platform.services",
+    "module_platform.repositories",
+    "module_platform.infrastructure",
+    "module_platform.deps",
+    "module_platform.system",
+    "module_platform.sync_trigger",
+    "module_alfresco",
+    "module_ingestion",
+    "cortex_server",
+    "cortex_worker",
+]
+
+[[tool.importlinter.contracts]]
+name = "Module Alfresco is independent"
+type = "forbidden"
+source_modules = ["module_alfresco"]
+forbidden_modules = [
+    "module_platform.api",
+    "module_platform.routes",
+    "module_platform.services",
+    "module_platform.repositories",
+    "module_platform.infrastructure",
+    "module_platform.deps",
+    "module_platform.system",
+    "module_platform.sync_trigger",
+    "module_ai",
+    "module_ingestion",
+    "cortex_server",
+    "cortex_worker",
+]
+
+[[tool.importlinter.contracts]]
+name = "Module Ingestion is independent"
+type = "forbidden"
+source_modules = ["module_ingestion"]
+forbidden_modules = [
+    "module_platform.api",
+    "module_platform.routes",
+    "module_platform.services",
+    "module_platform.repositories",
+    "module_platform.infrastructure",
+    "module_platform.deps",
+    "module_platform.system",
+    "module_platform.sync_trigger",
+    "module_ai",
+    "module_alfresco",
+    "cortex_server",
+    "cortex_worker",
+]
+
+[[tool.importlinter.contracts]]
+name = "Platform uses AI facade only"
+type = "forbidden"
+source_modules = ["module_platform"]
+forbidden_modules = ["module_alfresco", "module_ingestion", "cortex_server", "cortex_worker"]
+
+[[tool.importlinter.contracts]]
+name = "Platform must not import AI internals"
+type = "forbidden"
+source_modules = ["module_platform"]
+forbidden_modules = [
+    "module_ai.agents",
+    "module_ai.services",
+]
+
+[[tool.importlinter.contracts]]
+name = "Worker shell has no domain logic imports"
+type = "forbidden"
+source_modules = ["cortex_worker"]
+forbidden_modules = [
+    "module_alfresco.adapters",
+    "module_alfresco.services",
+    "module_ingestion.adapters",
+    "module_ingestion.services",
+    "module_platform",
+    "module_ai",
+    "cortex_server",
+]
