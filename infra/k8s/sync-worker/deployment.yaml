@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sync-worker
+  namespace: cortex-monolith
+  labels:
+    app: sync-worker
+    app.kubernetes.io/component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sync-worker
+  template:
+    metadata:
+      labels:
+        app: sync-worker
+        app.kubernetes.io/component: worker
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: sync-worker
+          image: cortex/sync-worker:latest
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: cortex-config
+          env:
+            - name: SERVICE
+              value: sync-worker
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cortex-secrets
+                  key: NEO4J_PASSWORD

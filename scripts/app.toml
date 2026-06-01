@@ -1,0 +1,67 @@
+[tool.poe.tasks.sync]
+cmd = "uv sync --all-packages"
+help = "Instaliraj i sinhronizuj sve workspace zavisnosti"
+
+[tool.poe.tasks.install-hooks]
+cmd = "pre-commit install"
+help = "Instaliraj pre-commit git hook-ove"
+
+[tool.poe.tasks.format]
+cmd = "ruff format ."
+help = "Formatiraj kod sa ruff"
+
+[tool.poe.tasks."ci:format"]
+cmd = "ruff format --check ."
+help = "Proveri formatiranje bez izmena"
+
+[tool.poe.tasks.lint]
+cmd = "ruff check --fix ."
+help = "Lint sa ruff (auto-fix)"
+
+[tool.poe.tasks."ci:lint"]
+cmd = "ruff check ."
+help = "Lint bez auto-fix"
+
+[tool.poe.tasks.check]
+cmd = "mypy libs/ packages/ apps/"
+help = "Type-check paketa"
+
+[tool.poe.tasks."lint-imports"]
+cmd = "lint-imports"
+help = "Arhitekturne granice (import-linter)"
+
+[tool.poe.tasks.test]
+cmd = "pytest -m 'not integration'"
+help = "Unit testovi"
+
+[tool.poe.tasks."test:integration"]
+cmd = "pytest -m integration"
+help = "Integration testovi (Docker)"
+
+[tool.poe.tasks.flc]
+sequence = ["format", "lint", "check"]
+help = "Format -> Lint -> Check"
+
+[tool.poe.tasks.flct]
+sequence = ["format", "lint", "check", "lint-imports", "test"]
+help = "Puna lokalna validacija"
+
+[tool.poe.tasks.ci]
+sequence = ["ci:format", "ci:lint", "check", "lint-imports", "test"]
+help = "CI pipeline"
+
+[tool.poe.tasks.api]
+cmd = "uvicorn cortex_server.main:app --app-dir apps/cortex-server --host 0.0.0.0 --port 8000 --reload"
+help = "FastAPI dev server"
+
+[tool.poe.tasks.dev]
+cmd = "bash scripts/dev.sh"
+help = "API + workers + flower + web"
+
+[tool.poe.tasks."db:up"]
+cmd = "docker compose -f infra/docker-compose.yml up -d"
+help = "Lokalna infra"
+
+[tool.poe.tasks."db:setup"]
+cmd = "alembic upgrade head"
+help = "Primeni Alembic migracije"

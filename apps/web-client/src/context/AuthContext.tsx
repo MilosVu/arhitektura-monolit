@@ -6,6 +6,7 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
+  loginWithSso: () => Promise<void>;
   logout: () => void;
 }
 
@@ -34,13 +35,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   };
 
+  const loginWithSso = async () => {
+    const { authorize_url } = await api.ssoUrl();
+    window.location.href = authorize_url;
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithSso, logout }}>
       {children}
     </AuthContext.Provider>
   );

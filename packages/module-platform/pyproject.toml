@@ -1,20 +1,27 @@
 [project]
 name = "module-platform"
 version = "0.1.0"
-description = "Cortex AI module — auth, cases, audit, sync trigger, system"
+description = "Cortex AI module — auth, cases, audit, system"
 requires-python = ">=3.12"
 dependencies = [
     "cortex-core",
+    "cortex-models",
     "module-ai",
+    "module-documents",
+    "module-chat",
+    "module-sync",
     "fastapi>=0.115",
     "python-jose[cryptography]>=3.3",
-    "celery>=5.3",
     "httpx>=0.27",
 ]
 
 [tool.uv.sources]
 cortex-core = { workspace = true }
+cortex-models = { workspace = true }
 module-ai = { workspace = true }
+module-documents = { workspace = true }
+module-chat = { workspace = true }
+module-sync = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

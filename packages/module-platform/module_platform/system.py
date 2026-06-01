@@ -3,16 +3,15 @@ import time
 from datetime import UTC, datetime
 
 import httpx
-from sqlalchemy import text
-
 from cortex_core.celery_app import create_celery_app
-from module_platform.infrastructure.redis import ping_redis
-from module_platform.models import get_engine
-from module_platform.schemas import ComponentStatus, SystemStatusResponse
 from cortex_core.infrastructure.weaviate.client import ping_weaviate
 from cortex_core.settings import get_settings
-
+from cortex_models import get_engine
 from module_ai.api import AiModule
+from sqlalchemy import text
+
+from module_platform.infrastructure.redis import ping_redis
+from module_platform.schemas import ComponentStatus, SystemStatusResponse
 
 settings = get_settings()
 celery_app = create_celery_app("system_check")
@@ -21,7 +20,9 @@ celery_app = create_celery_app("system_check")
 async def _timed_check(name: str, check_fn) -> ComponentStatus:
     start = time.perf_counter()
     try:
-        detail = await check_fn() if asyncio.iscoroutinefunction(check_fn) else check_fn()
+        detail = (
+            await check_fn() if asyncio.iscoroutinefunction(check_fn) else check_fn()
+        )
         latency = (time.perf_counter() - start) * 1000
         if detail is True or detail == "ok":
             return ComponentStatus(name=name, status="ok", latency_ms=round(latency, 1))

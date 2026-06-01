@@ -2,15 +2,23 @@
 
 Ovaj dokument opisuje kako je monolit organizovan po paketima, koji je plan razvoja `cortex-core` biblioteke i kako ce se sistem postepeno pripremati za izdvajanje novih biblioteka i nezavisnih servisa.
 
-## 1) Visok nivo arhitekture
+> Plan refactora (big-bang): [REFACTOR-PLAN.md](REFACTOR-PLAN.md)  
+> Onboarding tima: [docs/onboarding/README.md](docs/onboarding/README.md)
+
+## 1) Visok nivo arhitekture (ciljna produkcija)
 
 Tok zahteva i podataka:
 
-1. `web-client` salje zahteve ka `cortex-server` (FastAPI).
-2. `cortex-server` orkestrira `module-platform` i `module-ai` in-process.
-3. Asinhroni poslovi idu preko `RabbitMQ` ka `cortex-worker` (Celery).
-4. `cortex-worker` izvrsava zadatke iz `module-alfresco` i `module-ingestion`.
-5. Deljeni storage/infra sloj koristi `PostgreSQL`, `Redis`, `Weaviate`, `Neo4j`.
+1. `web-client` ide kroz edge sloj (WAF → LB → Rate Limiter) i auth (SSO → JWT).
+2. `cortex-server` montira routove svih HTTP modula: platform, documents, chat, sync, ai.
+3. `sync-worker` podize `module-dms-sync`, `ingestion-worker` podize `module-ingestion`.
+4. Svi moduli dele `cortex-core`, `cortex-models`, `cortex-connectors`.
+5. `module-documents` je jedini vlasnik `Document.status` (lifecycle metode).
+6. `module-sync` drzi `SyncOrchestrator` i enqueue-uje sync task.
+7. `module-dms-sync` vuče delta iz Alfresco, koristi `DocumentsModule` za metadata, Blob za fajlove.
+8. `module-ingestion` radi OCR → chunk → embed → Weaviate preko `SearchPort`.
+9. `module-ai` koristi LangGraph agente (RAG, NER, Laws, NLP) i cita iz Weaviate-a.
+10. `module-chat` persistuje thread-ove u Redis-u; AI generise stream.
 
 ## 2) Podela paketa na pocetku aplikacije
 
@@ -19,28 +27,26 @@ Tok zahteva i podataka:
 - `apps/cortex-server`
   - Composition root: podize FastAPI app, ukljucuje rout-ove i middleware.
   - Treba da ostane tanak orchestration sloj bez domenske logike.
-- `apps/cortex-worker`
-  - Worker bootstrap i registracija Celery app-a.
-  - Domenska logika treba da ostane u modulima.
+- `apps/sync-worker` i `apps/ingestion-worker`
+  - Odvojeni Celery deployable-i (I/O vs CPU/GPU profil).
+  - Domenska logika u `module-dms-sync` i `module-ingestion`.
 
 ### Domen/feature moduli
 
-- `packages/module-platform`
-  - Auth, cases, documents, sync trigger, audit, system.
-  - Platform modul komunicira sa AI slojem preko facade API-ja.
-- `packages/module-ai`
-  - Agent orchestration, chat/translation stubs, RAG pretraga, law lookup.
-  - Izolovan AI domen, nezavistan od platform internals.
-- `packages/module-alfresco`
-  - Adapter ka Alfresco i sync taskovi.
-- `packages/module-ingestion`
-  - OCR/chunk/embed pipeline i upis u vector store.
+- `packages/module-platform` — auth, cases, audit, system
+- `packages/module-documents` — Document CRUD + lifecycle (jedini menja status)
+- `packages/module-chat` — chat threads, Redis persistence
+- `packages/module-sync` — SyncOrchestrator, job trigger/polling
+- `packages/module-dms-sync` — DMS delta sync → Blob + PG (bivši alfresco)
+- `packages/module-ingestion` — OCR/chunk/embed pipeline, Weaviate write
+- `packages/module-ai` — LangGraph agenti (rag, legal, nlp podfolderi)
 
-### Deljeni core sloj
+### Deljeni lib sloj
 
-- `libs/cortex-core`
-  - Shared settings, ports (alfresco/llm/ocr/cache), celery wiring, redis/weaviate klijenti, bazne apstrakcije.
-  - Ovo je najvazniji kandidat za postepeno jacanje kao stabilan contract sloj.
+- `libs/cortex-core` — ports (SearchPort, AlfrescoPort, OCRPort, LLM), celery, settings
+- `libs/cortex-models` — ORM (User, Case, Document, SyncJob, AuditLog)
+- `libs/cortex-connectors` — Alfresco, Blob, OCR adapter stubs
+- `libs/cortex-observability` — metrics/tracing hooks (stub)
 
 ## 3) Smer razvoja `cortex-core` biblioteke
 
@@ -80,11 +86,12 @@ Predlog faznog razvoja:
 ## 5) Nezavisni servisi i integracije
 
 - `PostgreSQL` - transakcioni podaci (users, cases, documents, audit, sync jobs)
-- `Redis` - cache/session i Celery result backend
-- `RabbitMQ` - message broker za queue-e
-- `Weaviate` - vector pretraga i RAG retrieval
-- `Neo4j` - pravni graf i relacije
-- `Alfresco` - izvor dokumenata / sync endpoint
+- `Redis` - cache/session, chat i Celery result backend
+- `RabbitMQ` - message broker za Celery queue-e
+- `Weaviate` - hybrid pretraga (BM25 + vector) i RAG retrieval
+- `Neo4j` - law graph sada, general graph kasnije
+- `Blob Storage` - S3/MinIO za originalne fajlove posle sync-a
+- `Alfresco` - izvor istine za dokumente
 
 ## 6) Tehnologije ukljucene u trenutno resenje
 
@@ -106,38 +113,131 @@ Predlog faznog razvoja:
 
 ## 8) Dijagram (Mermaid)
 
+> Za Mermaid Live Editor kopiraj samo sadrzaj iz [`architecture.mmd`](architecture.mmd).
+
 ```mermaid
-flowchart TD
-    WC[web-client\nReact/Vite] --> CS[cortex-server\nFastAPI]
-    CS --> MP[module-platform]
-    CS --> MA[module-ai]
-    CS --> MQ[(RabbitMQ)]
-    MQ --> CW[cortex-worker\nCelery]
-    CW --> MALF[module-alfresco]
-    CW --> MING[module-ingestion]
+flowchart TB
+    WC["web-client<br/>React / Vite"]
 
-    MP --> CORE[libs/cortex-core]
-    MA --> CORE
-    MALF --> CORE
-    MING --> CORE
+    subgraph EDGE [Edge and Auth]
+        direction LR
+        EDGE_PIPE["WAF · LB · Rate Limit"] --> AUTH_PIPE["SSO · JWT"]
+    end
 
-    CORE --> PG[(PostgreSQL)]
-    CORE --> RD[(Redis)]
-    CORE --> WV[(Weaviate)]
-    CORE --> N4J[(Neo4j)]
+    WC --> EDGE
 
-    MALF --> ALF[Alfresco]
+    subgraph MONOLITH [Modularni Monolit]
+        direction TB
 
-    classDef app fill:#dbeafe,stroke:#1e3a8a,stroke-width:1px,color:#0f172a;
-    classDef mod fill:#dcfce7,stroke:#166534,stroke-width:1px,color:#0f172a;
-    classDef core fill:#fee2e2,stroke:#991b1b,stroke-width:1px,color:#0f172a;
-    classDef infra fill:#f3f4f6,stroke:#4b5563,stroke-width:1px,color:#111827;
+        CS["cortex-server · FastAPI shell"]
 
-    class WC,CS,CW app;
-    class MP,MA,MALF,MING mod;
-    class CORE core;
-    class PG,RD,MQ,WV,N4J,ALF infra;
+        subgraph HTTP_ROW [ ]
+            direction LR
+            MP["module-platform<br/>──────────────<br/>Auth · Cases · Audit · System"]
+            MDOC["module-documents<br/>──────────────<br/>Document CRUD · Lifecycle"]
+            MCHAT["module-chat<br/>──────────────<br/>Threads · Redis"]
+            MSYNC["module-sync<br/>──────────────<br/>SyncOrchestrator"]
+            MA["module-ai<br/>──────────────<br/>RAG · NER · Laws · NLP"]
+        end
+
+        CORE["libs/cortex-core · cortex-models · connectors"]
+
+        MQ[(RabbitMQ)]
+
+        subgraph WORKER_ROW [ ]
+            direction LR
+            MDMS["module-dms-sync<br/>──────────────<br/>sync-worker shell"]
+            MING["module-ingestion<br/>──────────────<br/>ingestion-worker shell"]
+        end
+
+        CS --> HTTP_ROW
+        MSYNC --> MQ
+        MQ --> MDMS
+        MDMS --> MING
+
+        HTTP_ROW --> CORE
+        WORKER_ROW --> CORE
+    end
+
+    EDGE --> CS
+
+    subgraph DATA [Data and Storage]
+        direction LR
+        PG[(PostgreSQL)]
+        RD[(Redis)]
+        WV[(Weaviate)]
+        N4J[(Neo4j)]
+        BLOB[(Blob)]
+    end
+
+    subgraph EXT [External]
+        direction LR
+        ALF[Alfresco]
+        SAAS["LLM · OCR"]
+    end
+
+    subgraph OPS [Ops]
+        direction LR
+        OBS["Observability<br/>Prometheus · Jaeger · ELK"]
+        INFRA["Infra<br/>Vault · Consul · CB"]
+        BAK["Backup · DR"]
+    end
+
+    CORE --> DATA
+    MDMS --> ALF
+    MA -.-> SAAS
+    MING -.-> SAAS
+    MONOLITH -.-> OPS
+    DATA --> BAK
+
+    classDef clientStyle fill:#fecaca,stroke:#991b1b,stroke-width:2px,color:#0f172a
+    classDef edgeStyle fill:#e5e7eb,stroke:#4b5563,stroke-width:2px,color:#111827
+    classDef shellStyle fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#0f172a
+    classDef platformStyle fill:#fef08a,stroke:#a16207,stroke-width:3px,color:#0f172a
+    classDef docsStyle fill:#fde68a,stroke:#b45309,stroke-width:3px,color:#0f172a
+    classDef chatStyle fill:#fbcfe8,stroke:#be185d,stroke-width:3px,color:#0f172a
+    classDef syncStyle fill:#ddd6fe,stroke:#5b21b6,stroke-width:3px,color:#0f172a
+    classDef aiStyle fill:#bfdbfe,stroke:#1e3a8a,stroke-width:3px,color:#0f172a
+    classDef dmsStyle fill:#86efac,stroke:#166534,stroke-width:3px,color:#0f172a
+    classDef ingestionStyle fill:#6ee7b7,stroke:#047857,stroke-width:3px,color:#0f172a
+    classDef coreStyle fill:#fee2e2,stroke:#991b1b,stroke-width:3px,color:#0f172a
+    classDef mqStyle fill:#bbf7d0,stroke:#166534,stroke-width:2px,color:#0f172a
+    classDef dataStyle fill:#fde68a,stroke:#b45309,stroke-width:2px,color:#0f172a
+    classDef extStyle fill:#f3f4f6,stroke:#4b5563,stroke-width:2px,color:#111827
+    classDef opsStyle fill:#ddd6fe,stroke:#5b21b6,stroke-width:2px,color:#0f172a
+
+    class WC clientStyle
+    class EDGE_PIPE,AUTH_PIPE edgeStyle
+    class CS shellStyle
+    class MP platformStyle
+    class MDOC docsStyle
+    class MCHAT chatStyle
+    class MSYNC syncStyle
+    class MA aiStyle
+    class MDMS dmsStyle
+    class MING ingestionStyle
+    class CORE coreStyle
+    class MQ mqStyle
+    class PG,RD,WV,N4J,BLOB dataStyle
+    class ALF,SAAS extStyle
+    class OBS,INFRA,BAK opsStyle
+
+    style MONOLITH fill:#f8fafc,stroke:#334155,stroke-width:3px,color:#0f172a
+    style HTTP_ROW fill:#fffbeb,stroke:#d97706,stroke-width:1px,stroke-dasharray:4
+    style WORKER_ROW fill:#ecfdf5,stroke:#059669,stroke-width:1px,stroke-dasharray:4
+    style DATA fill:#fffbeb,stroke:#b45309,stroke-width:2px
+    style EXT fill:#f9fafb,stroke:#6b7280,stroke-width:2px
+    style OPS fill:#f5f3ff,stroke:#7c3aed,stroke-width:2px
 ```
+
+### Legenda
+
+| Vizuelni element | Značenje |
+|------------------|----------|
+| Veliki okvir **Modularni Monolit** | Ceo repo — 7 modula + shared libs |
+| Isprekidani okvir **HTTP row** | HTTP moduli na cortex-server-u |
+| Isprekidani okvir **Worker row** | Async moduli na Celery workerima |
+| **cortex-core / models / connectors** | Deljeni kernel |
 
 
 

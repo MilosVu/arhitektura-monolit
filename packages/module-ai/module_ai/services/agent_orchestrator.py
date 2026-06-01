@@ -3,11 +3,10 @@
 from collections.abc import AsyncIterator
 
 from cortex_core.agents.state import AgentState
-
-from module_ai.agents.chat_agent import ChatAgent
-from module_ai.agents.law_link_agent import LawLinkAgent
-from module_ai.agents.rag_agent import RagAgent
-from module_ai.agents.translation_agent import TranslationAgent
+from module_ai.agents.legal.law_link_agent import LawLinkAgent
+from module_ai.agents.nlp.chat_agent import ChatAgent
+from module_ai.agents.nlp.translation_agent import TranslationAgent
+from module_ai.agents.rag.rag_agent import RagAgent
 
 
 class AgentOrchestrator:
@@ -23,7 +22,9 @@ class AgentOrchestrator:
         self._rag = RagAgent()
         self._law_link = LawLinkAgent()
 
-    async def run_chat(self, *, thread_id: str, case_id: int, user_id: int, message: str) -> AgentState:
+    async def run_chat(
+        self, *, thread_id: str, case_id: int, user_id: int, message: str
+    ) -> AgentState:
         state: AgentState = {
             "thread_id": thread_id,
             "case_id": case_id,

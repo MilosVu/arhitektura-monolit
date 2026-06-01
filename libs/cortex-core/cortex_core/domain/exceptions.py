@@ -1,17 +1,15 @@
-"""Domen greške — dele se između svih servisa."""
+"""Backward-compatible re-exports — prefer ``cortex_core.errors``."""
 
+from cortex_core.errors import (
+    CortexError,
+    DocumentNotFoundError,
+    ForbiddenError,
+    SyncJobNotFoundError,
+)
 
-class CortexError(Exception):
-    """Korenska greška platforme."""
-
-
-class ForbiddenError(CortexError):
-    """Korisnik nema pristup resursu (case ownership / AD role)."""
-
-
-class DocumentNotFoundError(CortexError):
-    """Dokument ne postoji ili nije vidljiv korisniku."""
-
-
-class SyncJobNotFoundError(CortexError):
-    """Sync job ne postoji."""
+__all__ = [
+    "CortexError",
+    "DocumentNotFoundError",
+    "ForbiddenError",
+    "SyncJobNotFoundError",
+]

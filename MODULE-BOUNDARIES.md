@@ -1,6 +1,8 @@
 # Modularni monolit — granice modula
 
-`arhitektura-monolit/` je **modularni monolit**: jedan deploy (`cortex-server` + `cortex-worker`), četiri domenska modula iznad `cortex-core`.
+`arhitektura-monolit/` je **modularni monolit**: `cortex-server` + `sync-worker` + `ingestion-worker`, sedam domenskih modula iznad shared lib-ova.
+
+> Plan refactora: [REFACTOR-PLAN.md](REFACTOR-PLAN.md)
 
 ## Dijagram
 
@@ -8,29 +10,43 @@
 flowchart TB
   subgraph apps [Deploy shell]
     Server[cortex-server]
-    Worker[cortex-worker]
+    SyncWorker[sync-worker]
+    IngestWorker[ingestion-worker]
   end
 
   subgraph modules [Domain modules]
     Platform[module-platform]
-    Alfresco[module-alfresco]
+    Documents[module-documents]
+    Chat[module-chat]
+    SyncMod[module-sync]
+    DmsSync[module-dms-sync]
     Ingestion[module-ingestion]
     AI[module-ai]
   end
 
-  Core[cortex-core]
+  subgraph libs [Shared libs]
+    Core[cortex-core]
+    Models[cortex-models]
+    Connectors[cortex-connectors]
+  end
 
   Server --> Platform
+  Server --> Documents
+  Server --> Chat
+  Server --> SyncMod
   Server --> AI
-  Worker --> Alfresco
-  Worker --> Ingestion
-  Platform --> Core
-  Alfresco --> Core
-  Ingestion --> Core
-  AI --> Core
-  Platform -->|"in-proc facade"| AI
-  Platform -->|"Celery task name only"| Alfresco
-  Alfresco -->|"Celery chain"| Ingestion
+  SyncWorker --> DmsSync
+  IngestWorker --> Ingestion
+
+  SyncMod --> DmsSync
+  DmsSync --> Documents
+  Ingestion --> Documents
+  Chat --> AI
+
+  modules --> Core
+  modules --> Models
+  DmsSync --> Connectors
+  Ingestion --> Connectors
 ```
 
 ## Struktura repoa
@@ -38,108 +54,87 @@ flowchart TB
 ```
 arhitektura-monolit/
 ├── libs/
-│   └── cortex-core/              # shared kernel (lib)
+│   ├── cortex-core/
+│   ├── cortex-models/
+│   ├── cortex-connectors/
+│   └── cortex-observability/
 ├── packages/
-│   ├── module-platform/
-│   │   └── module_platform/
-│   │       ├── routes/           # auth, cases, documents, sync, chat, audit, system
-│   │       ├── schemas/
-│   │       ├── models/           # ORM re-exports (Phase 2: own tables)
-│   │       ├── services/
-│   │       ├── repositories/
-│   │       ├── deps.py
-│   │       └── api.py
-│   ├── module-ai/
-│   │   └── module_ai/
-│   │       ├── routes/           # rag, laws, translate
-│   │       ├── schemas/
-│   │       ├── models/
-│   │       ├── services/
-│   │       ├── agents/
-│   │       └── api.py
-│   ├── module-alfresco/
-│   │   └── module_alfresco/
-│   │       ├── tasks.py          # Celery entrypoints (no HTTP)
-│   │       ├── schemas/
-│   │       ├── models/
-│   │       ├── services/
-│   │       └── adapters/
-│   └── module-ingestion/
-│       └── module_ingestion/     # isti layout kao alfresco
+│   ├── module-platform/      # auth, cases, audit, system
+│   ├── module-documents/     # Document CRUD + lifecycle
+│   ├── module-chat/          # chat threads, Redis
+│   ├── module-sync/          # SyncOrchestrator, job API
+│   ├── module-dms-sync/      # DMS delta sync (bivši alfresco)
+│   ├── module-ingestion/     # OCR, chunk, embed, Weaviate
+│   └── module-ai/            # LangGraph agenti
 ├── apps/
-│   ├── cortex-server/            # include_router + app.state wiring
-│   └── cortex-worker/
+│   ├── cortex-server/
+│   ├── sync-worker/
+│   └── ingestion-worker/
 ```
-
-**Konvencija:** `libs/` = deljeni kernel; `packages/` = domenski moduli (uv workspace paketi).
-
-### Učitavanje ruta
-
-```python
-# apps/cortex-server/cortex_server/main.py
-app.state.platform_module = platform_module
-app.state.ai_module = ai_module
-app.include_router(platform_router)
-app.include_router(ai_router)
-```
-
-Moduli registruju `APIRouter` u `routes/`; `cortex-server` samo montira routere i postavlja `app.state` za dependency injection.
 
 ## Javni API (`api.py`)
 
-Svaki modul izlaže **jednu** ulaznu tačku. Interni `services/`, `adapters/`, `repositories/` nisu za direktan import iz drugih modula.
-
 | Modul | Facade | DTO |
 |-------|--------|-----|
-| `module-platform` | `PlatformModule` | `module_platform/schemas.py` |
-| `module-ai` | `AiModule` | `module_ai/schemas.py` |
-| `module-alfresco` | `tasks.py` | Celery: `sync_case_from_alfresco`, `finalize_sync_job` |
+| `module-platform` | `PlatformModule` | `module_platform/schemas/` |
+| `module-documents` | `DocumentsModule` | `module_documents/schemas/` |
+| `module-chat` | `ChatModule` | `module_chat/schemas/` |
+| `module-sync` | `SyncModule` | `module_sync/schemas/` |
+| `module-ai` | `AiModule` | `module_ai/schemas/` |
+| `module-dms-sync` | `tasks.py` | Celery: `sync_case_from_dms`, `finalize_sync_job` |
 | `module-ingestion` | `tasks.py` | Celery: `ingest_document` |
 
 ## Pravila zavisnosti
 
 | Modul | Sme da zavisi od |
 |-------|------------------|
-| `module-platform` | `cortex-core`, `module-ai.api` |
-| `module-ai` | `cortex-core` |
-| `module-alfresco` | `cortex-core` |
-| `module-ingestion` | `cortex-core` |
-| `cortex-server` | sva 4 modula (preko `api.py`) + `cortex-core` |
-| `cortex-worker` | `module-alfresco`, `module-ingestion`, `cortex-core` |
+| `module-platform` | `cortex-core`, `cortex-models`, `module-ai.api` |
+| `module-documents` | `cortex-core`, `cortex-models` |
+| `module-chat` | `cortex-core`, `module-ai.api` |
+| `module-sync` | `cortex-core`, `cortex-models` |
+| `module-dms-sync` | `cortex-core`, `cortex-models`, `cortex-connectors`, `module-documents.api` |
+| `module-ingestion` | `cortex-core`, `cortex-models`, `cortex-connectors`, `module-documents.api` |
+| `module-ai` | `cortex-core` (SearchPort read) |
+| `cortex-server` | svi moduli preko `api.py` + routova |
+| `sync-worker` | `module-dms-sync`, `cortex-core` |
+| `ingestion-worker` | `module-ingestion`, `cortex-core` |
 
 **Zabranjeno:**
 
-- `module-ai` → `module-platform`
-- `module-alfresco` → `module-ingestion` (lanac ide preko Celery task imena, ne importa)
-- bilo koji modul → `cortex_server.*` / `cortex_worker.*` interni kod
-- `module-platform` → `module_ai.services` / `module_ai.agents` (samo `module_ai.api`)
+- bilo koji modul → interni kod drugog modula (samo `.api`)
+- worker moduli → direktan ORM write na `Document.status` (samo `DocumentsModule`)
+- `module-dms-sync` → `module-ingestion` (lanac preko Celery task imena)
 
-Enforcement: `make lint-imports` (import-linter konfig u root `pyproject.toml`).
+Enforcement: `make lint-imports`
 
 ## Celery task imena
 
-Centralna konvencija u `cortex_core.messaging.tasks`:
-
 | Konstanta | Task name |
 |-----------|-----------|
-| `TASK_SYNC_CASE` | `module_alfresco.tasks.sync_case_from_alfresco` |
+| `TASK_SYNC_CASE` | `module_dms_sync.tasks.sync_case_from_dms` |
 | `TASK_INGEST_DOCUMENT` | `module_ingestion.tasks.ingest_document` |
-| `TASK_FINALIZE_SYNC` | `module_alfresco.tasks.finalize_sync_job` |
+| `TASK_FINALIZE_SYNC` | `module_dms_sync.tasks.finalize_sync_job` |
 
-`module-platform` enqueue-uje sync preko `sync_trigger.py` — šalje samo task name, bez Alfresco logike.
+## Document lifecycle
 
-Worker koristi `cortex_core.worker_celery.get_worker_celery_app()` da izbegne ciklične importe.
+Samo `module-documents` menja `Document.status`. Worker moduli pozivaju `DocumentsModule.mark_syncing()`, `mark_ingesting()`, `mark_ready()`, `mark_failed()`.
 
-## Extract u mikroservis (mentalni test)
+## Hexagonal layout (P3)
 
-`module-ai` se može zamisliti kao zaseban `ai-agents` servis:
+Moduli sa `ports/` + `adapters/` + `register.py`:
 
-1. Kopiraj `packages/module-ai/` u novi repo
-2. U `PlatformModule` zameni `AiModule()` HTTP klijentom (isti DTO iz `cortex-core`)
-3. K8s doda `ai-agents` deployment — **ostali moduli ostaju u monolitu**
+| Modul | Hexagonal status |
+|-------|------------------|
+| `module-documents` | pun pilot (`DocumentRepositoryPort`, `DocumentService`) |
+| `module-platform` | `IdentityProviderPort`, `AuthService` |
+| `module-chat` | `ChatStorePort` → `RedisChatStore` |
+| `module-dms-sync` | `register.py`; shared portovi u `cortex-connectors` |
+| `module-ingestion` | `register.py`; OCR/Search preko `cortex-core` ports |
+| `module-sync` | `SyncOrchestrator` u `services/` |
+| `module-ai` | agenti + `SearchPort` read |
 
-Isti pattern važi za `module-alfresco` → `sync-worker`, `module-ingestion` → `ingestion-worker`.
+Vidi [docs/onboarding/hexagonal-layout.md](docs/onboarding/hexagonal-layout.md).
 
-## K8s
+## Extract u mikroservis
 
-**Bez promena** — namespace `cortex-monolith`, isti podovi, NodePort `:30081`. Modularnost je repo/runtime wiring, ne novi deploy.
+Isti pattern kao pre: kopiraj modul u novi repo, zameni in-proc facade HTTP klijentom, dodaj K8s deployment.

@@ -9,8 +9,8 @@ Prefer module_platform.chat_store for new code; this class uses plain dicts
 to avoid coupling cortex-core to module DTOs.
 """
 
-from datetime import UTC, datetime
 import json
+from datetime import UTC, datetime
 
 from cortex_core.infrastructure.redis.client import RedisCacheAdapter
 
@@ -36,7 +36,9 @@ class ChatRepository:
             "user_id": user_id,
             "created_at": datetime.now(UTC).isoformat(),
         }
-        self._cache.set_json(self._thread_key(thread_id), payload, ttl_seconds=THREAD_TTL_SECONDS)
+        self._cache.set_json(
+            self._thread_key(thread_id), payload, ttl_seconds=THREAD_TTL_SECONDS
+        )
 
     def get_thread(self, thread_id: str) -> dict | None:
         return self._cache.get_json(self._thread_key(thread_id))

@@ -35,7 +35,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: flower
-          image: cortex/cortex-worker:latest
+          image: cortex/sync-worker:latest
           imagePullPolicy: Never
           envFrom:
             - configMapRef:

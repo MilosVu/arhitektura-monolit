@@ -2,7 +2,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
     database_url: str = "postgresql+psycopg://cortex:cortex@localhost:5432/cortex"
     redis_url: str = "redis://localhost:6379/0"
@@ -15,6 +17,14 @@ class Settings(BaseSettings):
     neo4j_user: str = "neo4j"
     neo4j_password: str = "cortex123"
     rabbitmq_management_url: str = "http://localhost:15672"
+
+    auth_mock_enabled: bool = True
+    ad_tenant_id: str = ""
+    ad_client_id: str = ""
+    ad_client_secret: str = ""
+    ad_authority: str = "https://login.microsoftonline.com/common"
+    ad_redirect_uri: str = "http://localhost:5174/auth/callback"
+    ad_scopes: str = "openid profile email"
 
 
 def get_settings() -> Settings:

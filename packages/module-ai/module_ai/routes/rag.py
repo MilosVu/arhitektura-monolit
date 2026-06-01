@@ -1,10 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from cortex_models import Case, User, get_db
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from module_platform.models import User, get_db
-from module_ai.routes.deps import get_current_user, get_platform_module
+from module_ai.routes.deps import get_ai_module, get_current_user
 from module_ai.schemas import RagSearchRequest, RagSearchResponse
 
 router = APIRouter(tags=["rag"])
@@ -16,6 +16,13 @@ def search_case_documents(
     body: RagSearchRequest,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-    platform: Annotated[object, Depends(get_platform_module)],
+    ai: Annotated[object, Depends(get_ai_module)],
 ):
-    return platform.search_case_documents(case_id, body, current_user, db)
+    case = (
+        db.query(Case)
+        .filter(Case.id == case_id, Case.owner_id == current_user.id)
+        .first()
+    )
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return ai.rag_search(body.query, case_id, body.limit)

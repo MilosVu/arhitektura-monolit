@@ -5,11 +5,17 @@ description = "Cortex AI module — OCR, chunk, embed, Weaviate ingestion tasks"
 requires-python = ">=3.12"
 dependencies = [
     "cortex-core",
+    "cortex-models",
+    "cortex-connectors",
+    "module-documents",
     "celery>=5.3",
 ]
 
 [tool.uv.sources]
 cortex-core = { workspace = true }
+cortex-models = { workspace = true }
+cortex-connectors = { workspace = true }
+module-documents = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

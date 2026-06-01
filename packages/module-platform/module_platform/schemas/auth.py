@@ -1,6 +1,5 @@
-from pydantic import BaseModel
-
 from cortex_core.enums import UserRole
+from pydantic import BaseModel
 
 
 class LoginRequest(BaseModel):
@@ -22,3 +21,13 @@ class LoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+class SsoUrlResponse(BaseModel):
+    authorize_url: str
+    state: str
+
+
+class SsoCallbackRequest(BaseModel):
+    code: str
+    state: str | None = None

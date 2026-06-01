@@ -6,14 +6,17 @@ import json
 from fastapi.responses import StreamingResponse
 
 from module_ai.adapters.weaviate_store import search_chunks
-
 from module_ai.schemas import (
     LawNodeResponse,
     RagChunk,
     RagSearchResponse,
     TranslateResponse,
 )
-from module_ai.services.neo4j_store import get_law_by_ref, ping_neo4j, seed_laws_if_empty
+from module_ai.services.neo4j_store import (
+    get_law_by_ref,
+    ping_neo4j,
+    seed_laws_if_empty,
+)
 
 FALLBACK_RAG_CHUNKS = [
     RagChunk(
@@ -34,7 +37,9 @@ class AiModule:
     def ping_neo4j(self) -> bool:
         return ping_neo4j()
 
-    async def stream_chat(self, message: str, thread_id: str, case_id: int) -> StreamingResponse:
+    async def stream_chat(
+        self, message: str, thread_id: str, case_id: int
+    ) -> StreamingResponse:
         async def stream():
             chunks = [
                 "Basierend auf den Dokumenten in diesem Fall ",

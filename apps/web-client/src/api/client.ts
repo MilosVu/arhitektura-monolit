@@ -45,6 +45,15 @@ export const api = {
       body: JSON.stringify({ username, password }),
     }),
 
+  ssoUrl: () =>
+    request<{ authorize_url: string; state: string }>("/auth/sso/url"),
+
+  ssoCallback: (code: string, state?: string) =>
+    request<{ access_token: string; user: import("./types").User }>("/auth/sso/callback", {
+      method: "POST",
+      body: JSON.stringify({ code, state }),
+    }),
+
   me: () => request<import("./types").User>("/auth/me"),
 
   cases: () => request<import("./types").CaseSummary[]>("/cases"),

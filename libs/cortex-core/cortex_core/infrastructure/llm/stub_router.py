@@ -1,6 +1,6 @@
 """Stub LLM — deljen između ai-agents i ingestion-worker (bez cross-importa)."""
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 
 from cortex_core.ports.llm import LLMCompletionResult, LLMMessage, LLMPort
 
@@ -14,7 +14,9 @@ class StubLLMRouter(LLMPort):
         temperature: float = 0.2,
     ) -> LLMCompletionResult:
         _ = temperature
-        user_text = next((m.content for m in reversed(messages) if m.role == "user"), "")
+        user_text = next(
+            (m.content for m in reversed(messages) if m.role == "user"), ""
+        )
         return LLMCompletionResult(
             text=f"[MOCK {model}] {user_text[:200]}",
             model=model,
@@ -27,11 +29,13 @@ class StubLLMRouter(LLMPort):
         messages: list[LLMMessage],
         *,
         model: str = "local/cortex-llm",
-    ) -> AsyncIterator[str]:
+    ) -> AsyncGenerator[str, None]:
         result = await self.complete(messages, model=model)
         for word in result.text.split():
             yield word + " "
 
-    async def embed(self, texts: list[str], *, model: str = "local/cortex-embed") -> list[list[float]]:
+    async def embed(
+        self, texts: list[str], *, model: str = "local/cortex-embed"
+    ) -> list[list[float]]:
         _ = model
         return [[float(len(t) % 10) / 10.0] * 8 for t in texts]

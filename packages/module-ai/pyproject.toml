@@ -5,12 +5,14 @@ description = "Cortex AI module — agents, LLM, RAG, chat, laws"
 requires-python = ">=3.12"
 dependencies = [
     "cortex-core",
+    "cortex-models",
     "fastapi>=0.115",
     "neo4j>=5.0",
 ]
 
 [tool.uv.sources]
 cortex-core = { workspace = true }
+cortex-models = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

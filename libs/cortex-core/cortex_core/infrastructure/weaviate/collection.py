@@ -3,7 +3,6 @@
 import logging
 
 import weaviate.classes.config as wc
-
 from cortex_core.infrastructure.weaviate.client import get_weaviate_client
 
 logger = logging.getLogger(__name__)

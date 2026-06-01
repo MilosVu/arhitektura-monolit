@@ -21,7 +21,14 @@ class SyncProgressPublisher:
     def publish(self, job_id: str, *, progress: int, message: str, status: str) -> None:
         import json
 
-        payload = json.dumps({"job_id": job_id, "progress": progress, "message": message, "status": status})
+        payload = json.dumps(
+            {
+                "job_id": job_id,
+                "progress": progress,
+                "message": message,
+                "status": status,
+            }
+        )
         self._cache.publish(self._channel(job_id), payload)
 
     def channel_name(self, job_id: str) -> str:

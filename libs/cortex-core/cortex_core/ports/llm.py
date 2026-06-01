@@ -1,7 +1,7 @@
 """Port ka lokalnom LLM-u (LiteLLM / MaaS) — implementacija u ai-agents."""
 
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 
 
@@ -38,9 +38,11 @@ class LLMPort(ABC):
         messages: list[LLMMessage],
         *,
         model: str = "local/cortex-llm",
-    ) -> AsyncIterator[str]:
+    ) -> AsyncGenerator[str, None]:
         """Streaming tokeni za chat UI (SSE)."""
 
     @abstractmethod
-    async def embed(self, texts: list[str], *, model: str = "local/cortex-embed") -> list[list[float]]:
+    async def embed(
+        self, texts: list[str], *, model: str = "local/cortex-embed"
+    ) -> list[list[float]]:
         """Embedding vektori za ingestion-worker."""

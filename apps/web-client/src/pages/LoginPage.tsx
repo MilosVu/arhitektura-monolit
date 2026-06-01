@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
-  const { user, login } = useAuth();
+  const { user, login, loginWithSso } = useAuth();
   const [username, setUsername] = useState("hmueller");
   const [password, setPassword] = useState("mock");
   const [error, setError] = useState("");
@@ -65,7 +65,16 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full rounded bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Signing in..." : "Sign in (mock)"}
+        </button>
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => loginWithSso().catch(() => setError("SSO redirect failed"))}
+          className="mt-3 w-full rounded border border-slate-300 bg-white py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        >
+          Sign in with SSO (stub AD)
         </button>
 
         <p className="mt-4 text-center text-xs text-slate-400">

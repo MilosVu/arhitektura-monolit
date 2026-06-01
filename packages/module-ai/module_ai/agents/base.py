@@ -19,7 +19,9 @@ from cortex_core.infrastructure.redis.agent_checkpoint import LangGraphCheckpoin
 class BaseLangGraphAgent(ABC):
     name: str = "base-agent"
 
-    def __init__(self, checkpoint_store: LangGraphCheckpointStore | None = None) -> None:
+    def __init__(
+        self, checkpoint_store: LangGraphCheckpointStore | None = None
+    ) -> None:
         self._checkpoints = checkpoint_store or LangGraphCheckpointStore()
 
     @abstractmethod
@@ -38,7 +40,7 @@ class BaseLangGraphAgent(ABC):
             yield token + " "
 
     def load_checkpoint(self, thread_id: str) -> AgentState | None:
-        return self._checkpoints.load(thread_id)  # type: ignore[return-value]
+        return self._checkpoints.load(thread_id)
 
     def save_checkpoint(self, thread_id: str, state: AgentState) -> None:
         self._checkpoints.save(thread_id, dict(state))

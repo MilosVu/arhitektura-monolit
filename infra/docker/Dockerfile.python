@@ -13,12 +13,19 @@ ENV PATH="/root/.local/bin:$PATH" \
 
 COPY pyproject.toml uv.lock ./
 COPY libs/cortex-core libs/cortex-core
+COPY libs/cortex-models libs/cortex-models
+COPY libs/cortex-connectors libs/cortex-connectors
+COPY libs/cortex-observability libs/cortex-observability
 COPY packages/module-platform packages/module-platform
-COPY packages/module-alfresco packages/module-alfresco
+COPY packages/module-documents packages/module-documents
+COPY packages/module-chat packages/module-chat
+COPY packages/module-sync packages/module-sync
+COPY packages/module-dms-sync packages/module-dms-sync
 COPY packages/module-ingestion packages/module-ingestion
 COPY packages/module-ai packages/module-ai
 COPY apps/cortex-server apps/cortex-server
-COPY apps/cortex-worker apps/cortex-worker
+COPY apps/sync-worker apps/sync-worker
+COPY apps/ingestion-worker apps/ingestion-worker
 
 RUN uv sync --package ${SERVICE} --no-dev
 

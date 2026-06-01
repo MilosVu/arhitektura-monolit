@@ -1,14 +1,18 @@
+import asyncio
 import logging
 import time
 from datetime import UTC, datetime
 
-from cortex_core.enums import DocumentStatus
-from module_ingestion.models import Document, SyncJob, get_session_factory
-from module_ingestion.adapters.weaviate_store import upsert_document_chunks
+from cortex_core.ingestion_worker_celery import get_ingestion_celery_app
+from cortex_models import Document, SyncJob, get_session_factory
 
-from cortex_core.worker_celery import get_worker_celery_app
+from module_ingestion.worker_deps import register_worker_dependencies
 
-celery_app = get_worker_celery_app()
+celery_app = get_ingestion_celery_app()
+_worker_deps = register_worker_dependencies()
+_documents = _worker_deps.documents
+_ocr = _worker_deps.ocr
+_search = _worker_deps.search
 
 logger = logging.getLogger(__name__)
 
@@ -26,35 +30,30 @@ def _update_job_progress(job_id: str, increment: int, message: str) -> None:
         session.close()
 
 
-def _mock_chunks(filename: str, document_id: int) -> list[str]:
-    base = filename.replace(".pdf", "").replace("_", " ")
-    return [
-        f"Abschnitt 1 aus {base}: Die Parteien vereinbaren die Lieferung der Ware innerhalb von 30 Tagen.",
-        f"Abschnitt 2 aus {base}: Zahlungsfrist beträgt 30 Tage netto ab Rechnungsdatum. Vertrag Klausel 3.2.",
-        f"Abschnitt 3 aus {base}: Bei Vertragsbruch haftet die schuldige Partei gemäss OR Art. 41 für Schadenersatz.",
-    ]
-
-
 @celery_app.task(name="module_ingestion.tasks.ingest_document", bind=True)
 def ingest_document(self, document_id: int, job_id: str) -> dict:
     session = get_session_factory()()
     try:
         doc = session.query(Document).filter(Document.id == document_id).first()
         if not doc:
-            return {"status": "failed", "document_id": document_id, "reason": "not found"}
+            return {
+                "status": "failed",
+                "document_id": document_id,
+                "reason": "not found",
+            }
 
-        doc.status = DocumentStatus.INGESTING.value
-        doc.updated_at = datetime.now(UTC)
-        session.commit()
+        _documents.mark_ingesting(document_id, session)
 
         _update_job_progress(job_id, 10, f"OCR processing {doc.filename}...")
+
+        extraction = asyncio.run(_ocr.extract_text(doc.filename, b""))
+        chunks = asyncio.run(_ocr.chunk(extraction.plain_text))
 
         time.sleep(1)
 
         _update_job_progress(job_id, 5, f"Generating embeddings for {doc.filename}...")
 
-        chunks = _mock_chunks(doc.filename, document_id)
-        chunk_count = upsert_document_chunks(
+        chunk_count = _search.upsert_document_chunks(
             document_id=document_id,
             case_id=doc.case_id,
             filename=doc.filename,
@@ -62,9 +61,7 @@ def ingest_document(self, document_id: int, job_id: str) -> dict:
         )
         logger.info("Weaviate upsert: doc=%s chunks=%d", document_id, chunk_count)
 
-        doc.status = DocumentStatus.READY.value
-        doc.updated_at = datetime.now(UTC)
-        session.commit()
+        _documents.mark_ready(document_id, session, page_count=len(extraction.pages))
 
         return {
             "status": "ready",
@@ -72,5 +69,8 @@ def ingest_document(self, document_id: int, job_id: str) -> dict:
             "filename": doc.filename,
             "weaviate_chunks": chunk_count,
         }
+    except Exception as exc:
+        _documents.mark_failed(document_id, str(exc), session)
+        raise
     finally:
         session.close()

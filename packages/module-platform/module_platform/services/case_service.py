@@ -1,11 +1,11 @@
 """Case management — lista slučajeva filtrirana po AD ownership-u."""
 
+from cortex_core.base.service import BaseService
+from cortex_core.domain.exceptions import ForbiddenError
+from cortex_models import Case, Document, User
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
-from cortex_core.base.service import BaseService
-from cortex_core.domain.exceptions import ForbiddenError
-from module_platform.models import Case, Document, User
 from module_platform.schemas import CaseDetail, CaseSummary, UserResponse
 
 
@@ -18,7 +18,10 @@ class CaseService(BaseService):
         result: list[CaseSummary] = []
         for case in cases:
             doc_count = (
-                self._db.query(func.count(Document.id)).filter(Document.case_id == case.id).scalar() or 0
+                self._db.query(func.count(Document.id))
+                .filter(Document.case_id == case.id)
+                .scalar()
+                or 0
             )
             summary = CaseSummary.model_validate(case)
             summary.document_count = doc_count
@@ -45,7 +48,11 @@ class CaseService(BaseService):
         )
 
     def assert_case_access(self, case_id: int, user: User) -> Case:
-        case = self._db.query(Case).filter(Case.id == case_id, Case.owner_id == user.id).first()
+        case = (
+            self._db.query(Case)
+            .filter(Case.id == case_id, Case.owner_id == user.id)
+            .first()
+        )
         if not case:
             raise ForbiddenError(f"Case {case_id} not accessible")
         return case

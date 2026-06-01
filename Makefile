@@ -1,4 +1,5 @@
-.PHONY: infra-up infra-down install seed-neo4j dev dev-server dev-worker dev-flower dev-web stop lint-imports \
+.PHONY: infra-up infra-down install seed-neo4j dev dev-server dev-sync-worker dev-ingestion-worker dev-flower dev-web stop lint-imports \
+	flc flct test install-hooks db-setup \
 	minikube-start minikube-ingress install-minikube install-docker check-k8s k8s-build k8s-deploy k8s-seed-neo4j k8s-status k8s-logs-server k8s-url k8s-down
 
 ROOT := $(shell pwd)
@@ -30,14 +31,32 @@ install:
 lint-imports:
 	uv run lint-imports
 
+flc:
+	uv run poe flc
+
+flct:
+	uv run poe flct
+
+test:
+	uv run poe test
+
+install-hooks:
+	uv run poe install-hooks
+
+db-setup:
+	uv run poe db:setup
+
 dev-server:
 	cd "$(ROOT)" && uv run uvicorn cortex_server.main:app --app-dir apps/cortex-server --host 0.0.0.0 --port 8000 --reload
 
-dev-worker:
-	cd "$(ROOT)" && uv run celery -A cortex_worker.tasks:celery_app worker --loglevel=info -Q sync,ingestion -n worker@%h
+dev-sync-worker:
+	cd "$(ROOT)" && uv run celery -A sync_worker.tasks:celery_app worker --loglevel=info -Q sync -n sync@%h
+
+dev-ingestion-worker:
+	cd "$(ROOT)" && uv run celery -A ingestion_worker.tasks:celery_app worker --loglevel=info -Q ingestion -n ingestion@%h
 
 dev-flower:
-	cd "$(ROOT)" && uv run celery -A cortex_worker.tasks:celery_app flower --port=5555
+	cd "$(ROOT)" && uv run celery -A sync_worker.tasks:celery_app flower --port=5555
 
 dev-web:
 	cd apps/web-client && npx --yes pnpm@9 dev
@@ -46,14 +65,16 @@ dev:
 	@echo "Starting monolith services... (Ctrl+C to stop)"
 	@trap 'kill 0' EXIT; \
 	$(MAKE) dev-server & \
-	$(MAKE) dev-worker & \
+	$(MAKE) dev-sync-worker & \
+	$(MAKE) dev-ingestion-worker & \
 	$(MAKE) dev-flower & \
 	$(MAKE) dev-web & \
 	wait
 
 stop:
 	-pkill -f "uvicorn cortex_server.main" 2>/dev/null || true
-	-pkill -f "celery.*cortex_worker" 2>/dev/null || true
+	-pkill -f "celery.*sync_worker" 2>/dev/null || true
+	-pkill -f "celery.*ingestion_worker" 2>/dev/null || true
 	-pkill -f "flower" 2>/dev/null || true
 	-pkill -f "vite" 2>/dev/null || true
 
@@ -95,9 +116,10 @@ k8s-build:
 	@echo "Building monolith images into minikube Docker daemon..."
 	eval $$(minikube docker-env) && \
 	docker build -f infra/docker/Dockerfile.python --build-arg SERVICE=cortex-server -t cortex/cortex-server:latest . && \
-	docker build -f infra/docker/Dockerfile.python --build-arg SERVICE=cortex-worker -t cortex/cortex-worker:latest . && \
+	docker build -f infra/docker/Dockerfile.python --build-arg SERVICE=sync-worker -t cortex/sync-worker:latest . && \
+	docker build -f infra/docker/Dockerfile.python --build-arg SERVICE=ingestion-worker -t cortex/ingestion-worker:latest . && \
 	docker build -f apps/web-client/Dockerfile -t cortex/web-client-monolith:latest .
-	@echo "Images built: cortex/cortex-server, cortex/cortex-worker, web-client-monolith"
+	@echo "Images built: cortex/cortex-server, cortex/sync-worker, cortex/ingestion-worker, web-client-monolith"
 
 k8s-deploy:
 	kubectl apply -f "$(K8S)/namespace.yaml"
@@ -116,7 +138,8 @@ k8s-deploy:
 	kubectl wait --for=condition=ready pod -l app=redis -n cortex-monolith --timeout=120s || true
 	kubectl wait --for=condition=ready pod -l app=rabbitmq -n cortex-monolith --timeout=180s || true
 	kubectl apply -f "$(K8S)/cortex-server/"
-	kubectl apply -f "$(K8S)/cortex-worker/"
+	kubectl apply -f "$(K8S)/sync-worker/"
+	kubectl apply -f "$(K8S)/ingestion-worker/"
 	kubectl apply -f "$(K8S)/flower/"
 	kubectl apply -f "$(K8S)/web-client/"
 	kubectl apply -f "$(K8S)/ingress.yaml"

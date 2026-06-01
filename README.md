@@ -1,15 +1,27 @@
 # Cortex AI — Monolit arhitektura
 
-Ista MVP funkcionalnost kao [mikroservisna verzija](../arhitektura-mikroservisi/), ali sa **jednim FastAPI serverom** (API + AI in-process) i **jednim Celery workerom** (sync + ingestion).
+Ista MVP funkcionalnost kao [mikroservisna verzija](../arhitektura-mikroservisi/), ali sa **modularnim monolitom**: jedan FastAPI server + odvojeni Celery workeri.
+
+## Dokumentacija za tim
+
+| Dokument | Svrha |
+|----------|-------|
+| **[docs/onboarding/README.md](docs/onboarding/README.md)** | **Početak za development tim** |
+| [docs/onboarding/gde-sta-ide.md](docs/onboarding/gde-sta-ide.md) | Gde implementirati novi kod |
+| [MODULE-BOUNDARIES.md](MODULE-BOUNDARIES.md) | Granice modula |
+| [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md) | Arhitektura i integracije |
+| [docs/UPOREDBA-PROJEKAT-2.md](docs/UPOREDBA-PROJEKAT-2.md) | Razlike vs. referentni primer 2 |
+| [AGENTS.md](AGENTS.md) | Vodič za AI asistente |
+
+> Refactor plan: [REFACTOR-PLAN.md](REFACTOR-PLAN.md)
 
 ## Arhitektura
 
 ```
-web-client (React) → cortex-server (FastAPI) → PostgreSQL / Redis
-                        ↓ in-process              ↓
-                     AI modul                   RabbitMQ → cortex-worker
-                        ↓                                          ↓
-                    Weaviate / Neo4j                          Weaviate
+web-client → cortex-server → module-platform / documents / chat / sync / ai
+                                ↓
+                             RabbitMQ → sync-worker (module-dms-sync)
+                                      → ingestion-worker (module-ingestion)
 ```
 
 ## Brzo pokretanje
@@ -29,27 +41,20 @@ Login: `hmueller` / `mock`
 | Servis | Port | Opis |
 |--------|------|------|
 | web-client | 5174 | React frontend |
-| cortex-server | 8000 | API + AI (monolit) |
-| cortex-worker | — | Celery (sync + ingestion queue) |
+| cortex-server | 8000 | API composition root |
+| sync-worker | — | Celery queue `sync` |
+| ingestion-worker | — | Celery queue `ingestion` |
 | Flower | 5555 | Celery monitoring |
 
 ## Kubernetes
 
-Namespace: **`cortex-monolith`** (paralelno sa `cortex-ai` mikroservisa)
+Namespace: **`cortex-monolith`**
 
 ```bash
+make minikube-start
 make k8s-build
 make k8s-deploy
-make k8s-seed-neo4j
 make k8s-url
 ```
 
-| URL | Port |
-|-----|------|
-| App | `:30081` |
-| Flower | `:30556` |
-| RabbitMQ UI | `:31673` |
-
-## Poređenje
-
-Vidi [analiza-komparativna.md](../analiza-komparativna.md) u root folderu.
+Podovi: `cortex-server`, `sync-worker`, `ingestion-worker`, `web-client`, infra (postgres, redis, rabbitmq, weaviate, neo4j), flower.

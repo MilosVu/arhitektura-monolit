@@ -1,8 +1,8 @@
 from typing import Annotated
 
+from cortex_models import User
 from fastapi import APIRouter, Depends
 
-from module_platform.models import User
 from module_ai.routes.deps import get_ai_module, get_current_user
 from module_ai.schemas import LawNodeResponse
 

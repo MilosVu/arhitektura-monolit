@@ -2,14 +2,14 @@
 
 from datetime import UTC, datetime
 
-from sqlalchemy.orm import Session
-
 from cortex_core.base.service import BaseService
 from cortex_core.enums import DocumentStatus
 from cortex_core.infrastructure.llm.stub_router import StubLLMRouter
-from module_ingestion.models import Document
-from module_ingestion.adapters.weaviate_store import upsert_document_chunks
+from cortex_models import Document
+from sqlalchemy.orm import Session
+
 from module_ingestion.adapters.ocr_adapter import StubOCRAdapter
+from module_ingestion.adapters.weaviate_store import upsert_document_chunks
 
 
 class IngestionPipelineService(BaseService):
@@ -56,4 +56,8 @@ class IngestionPipelineService(BaseService):
         doc.updated_at = datetime.now(UTC)
         self._session.commit()
 
-        return {"status": "ready", "chunks": count, "vectors_dim": len(_vectors[0]) if _vectors else 0}
+        return {
+            "status": "ready",
+            "chunks": count,
+            "vectors_dim": len(_vectors[0]) if _vectors else 0,
+        }

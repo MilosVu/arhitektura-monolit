@@ -1,12 +1,12 @@
 """Redis adapter — implementacija CachePort protokola."""
 
 import json
-from typing import Any
-
-import redis
+from typing import Any, cast
 
 from cortex_core.ports.cache import CachePort
 from cortex_core.settings import get_settings
+
+import redis
 
 _client: redis.Redis | None = None
 
@@ -30,7 +30,7 @@ class RedisCacheAdapter(CachePort):
         self._client = client or get_redis_client()
 
     def get(self, key: str) -> str | None:
-        return self._client.get(key)
+        return cast(str | None, self._client.get(key))
 
     def set(self, key: str, value: str, *, ttl_seconds: int | None = None) -> None:
         if ttl_seconds:
@@ -54,5 +54,7 @@ class RedisCacheAdapter(CachePort):
         raw = self.get(key)
         return json.loads(raw) if raw else None
 
-    def set_json(self, key: str, payload: dict[str, Any], *, ttl_seconds: int | None = None) -> None:
+    def set_json(
+        self, key: str, payload: dict[str, Any], *, ttl_seconds: int | None = None
+    ) -> None:
         self.set(key, json.dumps(payload), ttl_seconds=ttl_seconds)

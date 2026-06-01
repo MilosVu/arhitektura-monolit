@@ -1,7 +1,6 @@
 from urllib.parse import urlparse
 
 import weaviate
-
 from cortex_core.settings import get_settings
 
 _client: weaviate.WeaviateClient | None = None

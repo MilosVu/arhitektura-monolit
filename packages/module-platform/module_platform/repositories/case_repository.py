@@ -1,4 +1,5 @@
 from cortex_core.base.repository import BaseRepository
+
 from module_platform.models import Case
 
 

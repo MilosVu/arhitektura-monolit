@@ -12,6 +12,6 @@ def get_worker_celery_app() -> Celery:
     if _worker_app is None:
         _worker_app = create_celery_app(
             "cortex_worker",
-            include=["module_alfresco.tasks", "module_ingestion.tasks"],
+            include=["module_dms_sync.tasks", "module_ingestion.tasks"],
         )
     return _worker_app

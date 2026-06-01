@@ -1,11 +1,15 @@
-"""Platform-owned PostgreSQL entities."""
+"""Platform re-exports shared ORM entities from cortex-models."""
 
-from module_platform.models.audit import AuditLog
-from module_platform.models.case import Case
-from module_platform.models.db import get_db, get_engine, get_session_factory
-from module_platform.models.document import Document
-from module_platform.models.sync_job import SyncJob
-from module_platform.models.user import User
+from cortex_models import (
+    AuditLog,
+    Case,
+    Document,
+    SyncJob,
+    User,
+    get_db,
+    get_engine,
+    get_session_factory,
+)
 
 __all__ = [
     "AuditLog",

@@ -1,9 +1,8 @@
 import logging
 
-from neo4j import GraphDatabase
-
-from module_ai.schemas import LawNodeResponse
 from cortex_core.settings import get_settings
+from module_ai.schemas import LawNodeResponse
+from neo4j import GraphDatabase
 
 logger = logging.getLogger(__name__)
 

@@ -7,9 +7,9 @@ QUEUE_SYNC = "sync"
 QUEUE_INGESTION = "ingestion"
 
 # Imena taskova (modularni monolit)
-TASK_SYNC_CASE = "module_alfresco.tasks.sync_case_from_alfresco"
+TASK_SYNC_CASE = "module_dms_sync.tasks.sync_case_from_dms"
 TASK_INGEST_DOCUMENT = "module_ingestion.tasks.ingest_document"
-TASK_FINALIZE_SYNC = "module_alfresco.tasks.finalize_sync_job"
+TASK_FINALIZE_SYNC = "module_dms_sync.tasks.finalize_sync_job"
 
 
 class BaseWorkerTask(ABC):

@@ -1,5 +1,4 @@
 import redis
-
 from cortex_core.settings import get_settings
 
 _redis_client: redis.Redis | None = None

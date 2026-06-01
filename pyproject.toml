@@ -4,31 +4,131 @@ version = "0.1.0"
 description = "Cortex AI MVP mockup — modular monolith architecture"
 requires-python = ">=3.12"
 
+[dependency-groups]
+dev = [
+    "poethepoet>=0.34",
+    "pre-commit>=4",
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6",
+    "mypy>=1.15",
+    "ruff>=0.9",
+    "httpx>=0.28",
+    "alembic>=1.14",
+    "import-linter>=2.0",
+    "flower>=2.0",
+    "types-python-jose>=3.3",
+]
+
 [tool.uv.workspace]
 members = [
     "libs/cortex-core",
+    "libs/cortex-models",
+    "libs/cortex-connectors",
+    "libs/cortex-observability",
     "packages/module-platform",
-    "packages/module-alfresco",
+    "packages/module-documents",
+    "packages/module-chat",
+    "packages/module-sync",
+    "packages/module-dms-sync",
     "packages/module-ingestion",
     "packages/module-ai",
     "apps/cortex-server",
-    "apps/cortex-worker",
+    "apps/sync-worker",
+    "apps/ingestion-worker",
 ]
 
-[tool.uv]
-dev-dependencies = [
-    "import-linter>=2.0",
+[tool.poe]
+include = ["scripts/app.toml"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+extend-exclude = ["alembic"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["D"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/routes/**" = ["B008", "PLR0913"]
+"**/deps.py" = ["B008", "B904"]
+"**/api.py" = ["PLR0913", "E501"]
+"apps/**" = ["S110", "SIM105"]
+"**/tests/**" = ["S101", "PLR2004"]
+"libs/**" = ["UP042", "UP046", "B024", "E501", "F821"]
+"**/models/**" = ["F821"]
+"packages/**" = ["B008", "E501", "B904", "RUF005"]
+
+[tool.mypy]
+strict = true
+namespace_packages = true
+explicit_package_bases = true
+plugins = ["pydantic.mypy"]
+exclude = ["alembic/"]
+disable_error_code = ["no-untyped-def", "no-untyped-call", "untyped-decorator"]
+
+[[tool.mypy.overrides]]
+module = ["cortex_models.*"]
+disable_error_code = ["name-defined"]
+
+[[tool.mypy.overrides]]
+module = ["cortex_core.*", "cortex_connectors.*", "cortex_observability.*"]
+disable_error_code = ["type-arg", "union-attr", "override"]
+
+[[tool.mypy.overrides]]
+module = [
+    "cortex_server.*",
+    "sync_worker.*",
+    "ingestion_worker.*",
+    "module_platform.*",
+    "module_documents.*",
+    "module_chat.*",
+    "module_sync.*",
+    "module_dms_sync.*",
+    "module_ingestion.*",
+    "module_ai.*",
+]
+disable_error_code = [
+    "attr-defined",
+    "arg-type",
+    "return-value",
+    "union-attr",
+    "type-arg",
+    "no-any-return",
+    "typeddict-unknown-key",
+]
+
+[[tool.mypy.overrides]]
+module = ["celery.*", "weaviate.*", "neo4j.*", "jose.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*", "*.tests.*"]
+disable_error_code = ["arg-type", "unused-ignore"]
+
+[tool.pytest.ini_options]
+testpaths = ["libs", "packages", "apps"]
+addopts = "-q --import-mode=importlib"
+markers = [
+    "integration: integration testovi — zahtevaju Docker infra",
 ]
 
 [tool.importlinter]
 root_packages = [
     "cortex_core",
+    "cortex_models",
+    "cortex_connectors",
     "module_platform",
-    "module_alfresco",
+    "module_documents",
+    "module_chat",
+    "module_sync",
+    "module_dms_sync",
     "module_ingestion",
     "module_ai",
     "cortex_server",
-    "cortex_worker",
+    "sync_worker",
+    "ingestion_worker",
 ]
 
 [[tool.importlinter.contracts]]
@@ -43,17 +143,20 @@ forbidden_modules = [
     "module_platform.infrastructure",
     "module_platform.deps",
     "module_platform.system",
-    "module_platform.sync_trigger",
-    "module_alfresco",
+    "module_documents",
+    "module_chat",
+    "module_sync",
+    "module_dms_sync",
     "module_ingestion",
     "cortex_server",
-    "cortex_worker",
+    "sync_worker",
+    "ingestion_worker",
 ]
 
 [[tool.importlinter.contracts]]
-name = "Module Alfresco is independent"
+name = "Module DMS Sync is independent"
 type = "forbidden"
-source_modules = ["module_alfresco"]
+source_modules = ["module_dms_sync"]
 forbidden_modules = [
     "module_platform.api",
     "module_platform.routes",
@@ -62,11 +165,13 @@ forbidden_modules = [
     "module_platform.infrastructure",
     "module_platform.deps",
     "module_platform.system",
-    "module_platform.sync_trigger",
     "module_ai",
     "module_ingestion",
+    "module_chat",
+    "module_sync",
     "cortex_server",
-    "cortex_worker",
+    "sync_worker",
+    "ingestion_worker",
 ]
 
 [[tool.importlinter.contracts]]
@@ -81,18 +186,79 @@ forbidden_modules = [
     "module_platform.infrastructure",
     "module_platform.deps",
     "module_platform.system",
-    "module_platform.sync_trigger",
     "module_ai",
-    "module_alfresco",
+    "module_dms_sync",
+    "module_chat",
+    "module_sync",
     "cortex_server",
-    "cortex_worker",
+    "sync_worker",
+    "ingestion_worker",
+]
+
+[[tool.importlinter.contracts]]
+name = "Module Documents is independent"
+type = "forbidden"
+source_modules = ["module_documents"]
+forbidden_modules = [
+    "module_platform.api",
+    "module_platform.routes",
+    "module_platform.services",
+    "module_ai",
+    "module_dms_sync",
+    "module_ingestion",
+    "module_chat",
+    "module_sync",
+    "cortex_server",
+    "sync_worker",
+    "ingestion_worker",
+]
+
+[[tool.importlinter.contracts]]
+name = "Module Chat is independent"
+type = "forbidden"
+source_modules = ["module_chat"]
+forbidden_modules = [
+    "module_platform.api",
+    "module_platform.routes",
+    "module_platform.services",
+    "module_documents",
+    "module_dms_sync",
+    "module_ingestion",
+    "module_sync",
+    "cortex_server",
+    "sync_worker",
+    "ingestion_worker",
+]
+
+[[tool.importlinter.contracts]]
+name = "Module Sync is independent"
+type = "forbidden"
+source_modules = ["module_sync"]
+forbidden_modules = [
+    "module_platform.api",
+    "module_platform.routes",
+    "module_platform.services",
+    "module_ai",
+    "module_dms_sync",
+    "module_ingestion",
+    "module_documents",
+    "module_chat",
+    "cortex_server",
+    "sync_worker",
+    "ingestion_worker",
 ]
 
 [[tool.importlinter.contracts]]
 name = "Platform uses AI facade only"
 type = "forbidden"
 source_modules = ["module_platform"]
-forbidden_modules = ["module_alfresco", "module_ingestion", "cortex_server", "cortex_worker"]
+forbidden_modules = [
+    "module_dms_sync",
+    "module_ingestion",
+    "cortex_server",
+    "sync_worker",
+    "ingestion_worker",
+]
 
 [[tool.importlinter.contracts]]
 name = "Platform must not import AI internals"
@@ -104,15 +270,26 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
-name = "Worker shell has no domain logic imports"
+name = "Sync worker shell has no domain logic imports"
 type = "forbidden"
-source_modules = ["cortex_worker"]
+source_modules = ["sync_worker"]
 forbidden_modules = [
-    "module_alfresco.adapters",
-    "module_alfresco.services",
+    "module_dms_sync.services",
+    "module_platform",
+    "module_ai",
+    "module_ingestion",
+    "cortex_server",
+]
+
+[[tool.importlinter.contracts]]
+name = "Ingestion worker shell has no domain logic imports"
+type = "forbidden"
+source_modules = ["ingestion_worker"]
+forbidden_modules = [
     "module_ingestion.adapters",
     "module_ingestion.services",
     "module_platform",
     "module_ai",
+    "module_dms_sync",
     "cortex_server",
 ]

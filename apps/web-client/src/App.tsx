@@ -7,6 +7,7 @@ import CasesListPage from "./pages/CasesListPage";
 import ChatPage from "./pages/ChatPage";
 import DocumentViewPage from "./pages/DocumentViewPage";
 import LawsPage from "./pages/LawsPage";
+import AuthCallbackPage from "./pages/AuthCallbackPage";
 import LoginPage from "./pages/LoginPage";
 import SearchPage from "./pages/SearchPage";
 import SyncStatusPage from "./pages/SyncStatusPage";
@@ -19,6 +20,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<Navigate to="/cases" replace />} />
             <Route path="/cases" element={<CasesListPage />} />

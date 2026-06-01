@@ -5,7 +5,11 @@ description = "Cortex AI monolith server — composition root (FastAPI wiring)"
 requires-python = ">=3.12"
 dependencies = [
     "cortex-core",
+    "cortex-models",
     "module-platform",
+    "module-documents",
+    "module-chat",
+    "module-sync",
     "module-ai",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
@@ -17,7 +21,11 @@ dependencies = [
 
 [tool.uv.sources]
 cortex-core = { workspace = true }
+cortex-models = { workspace = true }
 module-platform = { workspace = true }
+module-documents = { workspace = true }
+module-chat = { workspace = true }
+module-sync = { workspace = true }
 module-ai = { workspace = true }
 
 [build-system]

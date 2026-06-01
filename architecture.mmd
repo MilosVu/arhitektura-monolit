@@ -1,0 +1,112 @@
+flowchart TB
+    WC["web-client<br/>React / Vite"]
+
+    subgraph EDGE [Edge and Auth]
+        direction LR
+        EDGE_PIPE["WAF · LB · Rate Limit"] --> AUTH_PIPE["SSO · JWT"]
+    end
+
+    WC --> EDGE
+
+    subgraph MONOLITH [Modularni Monolit]
+        direction TB
+
+        CS["cortex-server · FastAPI shell"]
+
+        subgraph HTTP_ROW [ ]
+            direction LR
+            MP["module-platform<br/>──────────────<br/>Auth · Cases · Audit · System"]
+            MDOC["module-documents<br/>──────────────<br/>Document CRUD · Lifecycle"]
+            MCHAT["module-chat<br/>──────────────<br/>Threads · Redis"]
+            MSYNC["module-sync<br/>──────────────<br/>SyncOrchestrator"]
+            MA["module-ai<br/>──────────────<br/>RAG · NER · Laws · NLP"]
+        end
+
+        CORE["libs/cortex-core · cortex-models · connectors"]
+
+        MQ[(RabbitMQ)]
+
+        subgraph WORKER_ROW [ ]
+            direction LR
+            MDMS["module-dms-sync<br/>──────────────<br/>sync-worker shell"]
+            MING["module-ingestion<br/>──────────────<br/>ingestion-worker shell"]
+        end
+
+        CS --> HTTP_ROW
+        MSYNC --> MQ
+        MQ --> MDMS
+        MDMS --> MING
+
+        HTTP_ROW --> CORE
+        WORKER_ROW --> CORE
+    end
+
+    EDGE --> CS
+
+    subgraph DATA [Data and Storage]
+        direction LR
+        PG[(PostgreSQL)]
+        RD[(Redis)]
+        WV[(Weaviate)]
+        N4J[(Neo4j)]
+        BLOB[(Blob)]
+    end
+
+    subgraph EXT [External]
+        direction LR
+        ALF[Alfresco]
+        SAAS["LLM · OCR"]
+    end
+
+    subgraph OPS [Ops]
+        direction LR
+        OBS["Observability"]
+        INFRA["Infra"]
+        BAK["Backup · DR"]
+    end
+
+    CORE --> DATA
+    MDMS --> ALF
+    MA -.-> SAAS
+    MING -.-> SAAS
+    MONOLITH -.-> OPS
+    DATA --> BAK
+
+    classDef clientStyle fill:#fecaca,stroke:#991b1b,stroke-width:2px,color:#0f172a
+    classDef edgeStyle fill:#e5e7eb,stroke:#4b5563,stroke-width:2px,color:#111827
+    classDef shellStyle fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#0f172a
+    classDef platformStyle fill:#fef08a,stroke:#a16207,stroke-width:3px,color:#0f172a
+    classDef docsStyle fill:#fde68a,stroke:#b45309,stroke-width:3px,color:#0f172a
+    classDef chatStyle fill:#fbcfe8,stroke:#be185d,stroke-width:3px,color:#0f172a
+    classDef syncStyle fill:#ddd6fe,stroke:#5b21b6,stroke-width:3px,color:#0f172a
+    classDef aiStyle fill:#bfdbfe,stroke:#1e3a8a,stroke-width:3px,color:#0f172a
+    classDef dmsStyle fill:#86efac,stroke:#166534,stroke-width:3px,color:#0f172a
+    classDef ingestionStyle fill:#6ee7b7,stroke:#047857,stroke-width:3px,color:#0f172a
+    classDef coreStyle fill:#fee2e2,stroke:#991b1b,stroke-width:3px,color:#0f172a
+    classDef mqStyle fill:#bbf7d0,stroke:#166534,stroke-width:2px,color:#0f172a
+    classDef dataStyle fill:#fde68a,stroke:#b45309,stroke-width:2px,color:#0f172a
+    classDef extStyle fill:#f3f4f6,stroke:#4b5563,stroke-width:2px,color:#111827
+    classDef opsStyle fill:#ddd6fe,stroke:#5b21b6,stroke-width:2px,color:#0f172a
+
+    class WC clientStyle
+    class EDGE_PIPE,AUTH_PIPE edgeStyle
+    class CS shellStyle
+    class MP platformStyle
+    class MDOC docsStyle
+    class MCHAT chatStyle
+    class MSYNC syncStyle
+    class MA aiStyle
+    class MDMS dmsStyle
+    class MING ingestionStyle
+    class CORE coreStyle
+    class MQ mqStyle
+    class PG,RD,WV,N4J,BLOB dataStyle
+    class ALF,SAAS extStyle
+    class OBS,INFRA,BAK opsStyle
+
+    style MONOLITH fill:#f8fafc,stroke:#334155,stroke-width:3px,color:#0f172a
+    style HTTP_ROW fill:#fffbeb,stroke:#d97706,stroke-width:1px,stroke-dasharray:4
+    style WORKER_ROW fill:#ecfdf5,stroke:#059669,stroke-width:1px,stroke-dasharray:4
+    style DATA fill:#fffbeb,stroke:#b45309,stroke-width:2px
+    style EXT fill:#f9fafb,stroke:#6b7280,stroke-width:2px
+    style OPS fill:#f5f3ff,stroke:#7c3aed,stroke-width:2px

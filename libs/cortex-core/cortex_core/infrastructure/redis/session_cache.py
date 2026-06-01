@@ -25,7 +25,9 @@ class AdSessionCache:
     def get_session(self, user_id: int) -> dict | None:
         return self._cache.get_json(self._key(user_id))
 
-    def set_session(self, user_id: int, *, roles: list[str], ad_groups: list[str]) -> None:
+    def set_session(
+        self, user_id: int, *, roles: list[str], ad_groups: list[str]
+    ) -> None:
         payload = {
             "user_id": user_id,
             "roles": roles,

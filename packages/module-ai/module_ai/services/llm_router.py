@@ -1,5 +1,5 @@
 from cortex_core.infrastructure.llm.stub_router import StubLLMRouter
-from cortex_core.ports.llm import LLMCompletionResult, LLMMessage, LLMPort
+from cortex_core.ports.llm import LLMCompletionResult, LLMMessage
 
 
 class LiteLLMRouter(StubLLMRouter):
