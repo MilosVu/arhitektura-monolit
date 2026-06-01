@@ -110,7 +110,7 @@ Proposed phased development:
 
 ## 8) Diagram (Mermaid)
 
-> For Mermaid Live Editor copy content from [`architecture.mmd`](../../../../architecture.mmd).
+> For Mermaid Live Editor copy content from [`architecture.mmd`](../../../architecture.mmd).
 
 ```mermaid
 flowchart TB

@@ -15,6 +15,8 @@ make lint-imports
 make flct    # format + lint + mypy + import-linter + test (same as CI)
 ```
 
+**In Cursor before commit:** `/code-review` → fix blockers → `/flct`
+
 ## Include in the PR description
 
 - Which module / use-case

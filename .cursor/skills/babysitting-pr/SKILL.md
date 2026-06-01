@@ -65,6 +65,8 @@ gh pr checks --watch
 
 **Max 3 fix cycles** — then report blockers.
 
+If many independent CI steps failed, you may launch parallel subagents per slice (format, lint, mypy, import-linter, test) — then merge and run `make flct`.
+
 ## 6. Report
 
 - CI: what failed, what was fixed

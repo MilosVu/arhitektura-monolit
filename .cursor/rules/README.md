@@ -4,7 +4,7 @@ Operative rules for AI assistants (Cursor) working in **this repository**.
 
 **Location:** `.cursor/rules/` at the repo root. Open Cursor with this folder as the workspace root — otherwise these rules will not load.
 
-Long-form documentation lives in [`docs/engineering/`](../docs/engineering/README.md). Rules are short, actionable invariants; docs explain the why.
+Long-form documentation lives in [`docs/engineering/`](../../docs/engineering/README.md). Rules are short, actionable invariants; docs explain the why.
 
 ## How rules are tiered
 
@@ -51,6 +51,8 @@ Project skills: [skills/README.md](../skills/README.md)
 | `/flct` | Loop until quality gate passes |
 | `/api-smoke` | After HTTP route changes |
 | `/babysit-pr` | Open PR needs attention |
+| `/code-review` | Pre-commit review before git commit |
+| `/update-docs` | Refresh docs + verify links |
 
 ## Adding or changing a rule
 
@@ -63,6 +65,6 @@ Project skills: [skills/README.md](../skills/README.md)
 
 | Doc | Purpose |
 |-----|---------|
-| [AGENTS.md](../AGENTS.md) | Agent entry point (commands, invariants) |
-| [docs/engineering/README.md](../docs/engineering/README.md) | Developer onboarding |
-| [docs/engineering/decisions/README.md](../docs/engineering/decisions/README.md) | ADRs — architectural decisions |
+| [AGENTS.md](../../AGENTS.md) | Agent entry point (commands, invariants) |
+| [docs/engineering/README.md](../../docs/engineering/README.md) | Developer onboarding |
+| [docs/engineering/decisions/README.md](../../docs/engineering/decisions/README.md) | ADRs — architectural decisions |

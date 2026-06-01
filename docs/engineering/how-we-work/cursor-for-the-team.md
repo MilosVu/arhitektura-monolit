@@ -4,7 +4,7 @@ How we use **Cursor** (AI-assisted coding) in this repository. You do not need t
 
 ## One-time setup
 
-1. **Clone this repo** and open **`arhitektura-monolit/`** as the **workspace root** in Cursor.  
+1. **Clone this repo** and open the **repository root** as the **workspace root** in Cursor.  
    If you open a parent folder, `.cursor/rules/` will not load correctly.
 
 2. **Pull latest** — `.cursor/` is in git. Everyone gets the same rules and skills.
@@ -59,8 +59,19 @@ You write normal code. Cursor follows the rules. You invoke commands when you wa
 | **`/flct`** | After changes — agent loops until `make flct` passes (format, lint, mypy, import-linter, tests). |
 | **`/api-smoke`** | After adding or changing HTTP routes — hit endpoints, report 404/500. |
 | **`/babysit-pr`** | Open PR with failing CI or review comments — agent tries to fix and re-check. |
+| **`/code-review`** | **Before `git commit`** — architecture, security, correctness, tests (read-only report). |
+| **`/update-docs`** | Refresh engineering docs from git changes **and verify/fix links**. |
 
 ### Typical flows
+
+**Every commit (non-trivial change)**:
+
+1. **`/code-review`** — verdict 🟢/🟡/🔴 + architecture checklist
+2. Fix **BLOCKER** items
+3. **`/flct`**
+4. `git commit`
+
+Variants: **`/code-review staged`** | **`/code-review vs main`**
 
 **Small fix** (typo, one file):
 
@@ -71,7 +82,8 @@ You write normal code. Cursor follows the rules. You invoke commands when you wa
 1. `/onboard`
 2. Describe the feature (“add endpoint X in module-documents”)
 3. Agent should check [feature-placement.md](feature-placement.md)
-4. Before PR: `make flct` or `/flct`
+4. Before commit: **`/code-review`** → fix blockers → **`/flct`**
+5. Before push/PR: `make flct` if not already green
 
 **New frontend screen**:
 
@@ -83,6 +95,18 @@ You write normal code. Cursor follows the rules. You invoke commands when you wa
 **Open PR not green**:
 
 → `/babysit-pr`
+
+**Sync / document status stuck**:
+
+→ Ask agent to use **systematic-debugging** skill (Flower, workers, lifecycle)
+
+**Docs refresh** (sprint end, big merge, renames):
+
+→ **`/update-docs`** — sync content from git + link check in one pass
+
+→ **`/update-docs links only`** — link check only, no content refresh
+
+→ **`/update-docs plan only`** — analysis + plan, no edits
 
 ---
 
@@ -123,6 +147,7 @@ Full index: [.cursor/rules/README.md](../../../.cursor/rules/README.md)
 | `parallel-exploring` | “Where is sync triggered?” / “Map the ingestion flow” |
 | `grinding-until-pass` | Same as `/flct` |
 | `verifying-in-browser` | “Check the UI on 5174 after this change” |
+| `systematic-debugging` | “Sync stuck on syncing” / “document never reaches ready” |
 | `frontend-dev-starter` | “I'm starting work on web-client” |
 
 Index: [.cursor/skills/README.md](../../../.cursor/skills/README.md)

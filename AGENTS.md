@@ -14,6 +14,8 @@ Detailed operative rules: [.cursor/rules/README.md](.cursor/rules/README.md).
 | `/flct` | Grind until `make flct` passes |
 | `/api-smoke` | Hit FastAPI routes, report errors |
 | `/babysit-pr` | Keep open PR merge-ready |
+| `/code-review` | Pre-commit code review (architecture + quality) |
+| `/update-docs` | Refresh docs + verify links since last doc commit |
 
 Full skill index: [.cursor/skills/README.md](.cursor/skills/README.md).
 
@@ -52,10 +54,19 @@ Scripts: `scripts/dev.sh`, `scripts/seed-neo4j.sh`.
 
 Use [docs/engineering/decisions/template.md](docs/engineering/decisions/template.md) and add an ADR under `docs/engineering/decisions/`.
 
-## Do not
+## Do not — ever
 
-- Reintroduce `module-alfresco` or `cortex-worker`
-- Import `module_ai.agents` from other modules
-- Write `Document.status` directly in workers
+These break architecture, data integrity, or deploy topology. **No exceptions, no “just for this PR”.**
 
-Auth target: AD/SSO via frontend → backend validation → local User for RBAC. See [docs/engineering/how-we-work/auth.md](docs/engineering/how-we-work/auth.md).
+- **Reintroduce `module-alfresco` or a single `cortex-worker`** — use `module-dms-sync` + `sync-worker` / `ingestion-worker`
+- **Import another module’s internals** — no `module_*.services`, `module_*.agents`, `repositories`, or worker `tasks` across modules; only `module_*/api.py` facades
+- **Set `Document.status` outside `module-documents`** — workers call `DocumentsModule.mark_*()` only; never `doc.status = …` in dms-sync, ingestion, or platform
+- **Hardcode Celery task names or import `module-ingestion` from `module-dms-sync`** — use `cortex_core.messaging.tasks` and queue via broker only
+- **Put domain logic in `apps/*/main.py`** — app shells wire routers and DI; business rules live in `packages/module-*`
+- **Duplicate ORM models** outside `libs/cortex-models` — one schema source of truth
+- **Weaken or bypass import-linter** to make a cross-module import “pass” — fix the boundary, not the contract
+- **Ship secrets** in code, `.env` commits, or logged JWT/password values
+
+## Auth target
+
+AD/SSO via frontend → backend validation → local User for RBAC. See [docs/engineering/how-we-work/auth.md](docs/engineering/how-we-work/auth.md).

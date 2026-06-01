@@ -12,6 +12,7 @@ Central entry point for all monolith repository documentation.
 | **Using Cursor (AI)** | [engineering/how-we-work/cursor-for-the-team.md](engineering/how-we-work/cursor-for-the-team.md) |
 | **Dev implementing a feature** | [engineering/how-we-work/feature-placement.md](engineering/how-we-work/feature-placement.md) |
 | **Architect / tech lead** | [engineering/decisions/README.md](engineering/decisions/README.md) |
+| **Docs stale after sprint** | Run **`/update-docs`** in Cursor (refreshes content + links — see [cursor-for-the-team.md](engineering/how-we-work/cursor-for-the-team.md)) |
 | **AI assistant (Cursor)** | [AGENTS.md](../AGENTS.md) in the repo root |
 
 ## Layout
