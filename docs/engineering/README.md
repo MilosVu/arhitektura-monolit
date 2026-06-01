@@ -11,9 +11,10 @@ Starting point for the **development team**: architecture, onboarding, decisions
 5. [how-we-work/repository-structure.md](how-we-work/repository-structure.md) — folders, naming
 6. [how-we-work/auth.md](how-we-work/auth.md) — AD/SSO flow vs mock MVP
 7. [how-we-work/local-development.md](how-we-work/local-development.md) — running locally, ports, Makefile
-8. [how-we-work/first-pr-checklist.md](how-we-work/first-pr-checklist.md) — before merge
-9. [architecture/architecture-ready.md](architecture/architecture-ready.md) — architecture ready for the team
-10. [how-we-work/first-feature.md](how-we-work/first-feature.md) — first PR walkthrough
+8. [how-we-work/cursor-for-the-team.md](how-we-work/cursor-for-the-team.md) — **Cursor rules, skills, slash commands**
+9. [how-we-work/first-pr-checklist.md](how-we-work/first-pr-checklist.md) — before merge
+10. [architecture/architecture-ready.md](architecture/architecture-ready.md) — architecture ready for the team
+11. [how-we-work/first-feature.md](how-we-work/first-feature.md) — first PR walkthrough
 
 ## Architectural decisions (ADR)
 
@@ -26,8 +27,11 @@ Why something was built a certain way → [decisions/README.md](decisions/README
 
 ## AI assistants
 
+Human-readable guide: [how-we-work/cursor-for-the-team.md](how-we-work/cursor-for-the-team.md)
+
 - Entry point: [AGENTS.md](../../AGENTS.md)
-- Cursor rules (English): [.cursor/rules/README.md](../../.cursor/rules/README.md)
+- Cursor rules: [.cursor/rules/README.md](../../.cursor/rules/README.md)
+- Cursor skills: [.cursor/skills/README.md](../../.cursor/skills/README.md) — `/onboard`, `/flct`, etc.
 
 ## Quick start
 

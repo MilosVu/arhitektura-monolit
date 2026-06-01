@@ -39,7 +39,18 @@ Tier 1 rules have `alwaysApply: true`. Tier 2 and 3 activate when you edit files
 1. Read [monolith-overview.mdc](monolith-overview.mdc) and [feature-placement.mdc](feature-placement.mdc).
 2. Before a cross-module change → [module-boundaries.mdc](module-boundaries.mdc).
 3. After changing import boundaries → run `make lint-imports`.
-4. Before merge → `make flct`.
+4. Before merge → `make flct` (or `/flct` in chat)
+
+## Skills and slash commands
+
+Project skills: [skills/README.md](../skills/README.md)
+
+| Command | When |
+|---------|------|
+| `/onboard` | Start of new chat or cross-module work |
+| `/flct` | Loop until quality gate passes |
+| `/api-smoke` | After HTTP route changes |
+| `/babysit-pr` | Open PR needs attention |
 
 ## Adding or changing a rule
 

@@ -9,6 +9,7 @@ Central entry point for all monolith repository documentation.
 | **PM / product owner** | [product/README.md](product/README.md) |
 | **User / customer success** | [product/README.md](product/README.md) → user guide (coming soon) |
 | **New developer on the team** | [engineering/README.md](engineering/README.md) |
+| **Using Cursor (AI)** | [engineering/how-we-work/cursor-for-the-team.md](engineering/how-we-work/cursor-for-the-team.md) |
 | **Dev implementing a feature** | [engineering/how-we-work/feature-placement.md](engineering/how-we-work/feature-placement.md) |
 | **Architect / tech lead** | [engineering/decisions/README.md](engineering/decisions/README.md) |
 | **AI assistant (Cursor)** | [AGENTS.md](../AGENTS.md) in the repo root |

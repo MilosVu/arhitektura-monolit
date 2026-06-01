@@ -1,34 +1,40 @@
-# Frontend — smeštaj u monolitu
+# Frontend — placement in the monolith
 
-React aplikacija živi u **`apps/web-client/`** (Vite + TypeScript).
+React app lives in **`apps/web-client/`** (Vite + TypeScript + pnpm).
 
-## Gde dodati kod
+## Where to add code
 
-| Šta | Folder |
-|-----|--------|
-| Novi ekran | `src/pages/` |
-| Deljeni UI | `src/components/` |
-| API pozivi / tipovi | `src/api/client.ts`, `src/api/types.ts` |
+| What | Folder |
+|------|--------|
+| New screen | `src/pages/` |
+| Shared UI | `src/components/` |
+| API calls / types | `src/api/client.ts`, `src/api/types.ts` |
 | Auth state (token, user) | `src/context/AuthContext.tsx` |
-| Rute | `src/App.tsx` |
+| Routes | `src/App.tsx` |
 
-## Auth flow (cilj)
+## Auth flow (target)
 
-1. Korisnik na login → redirect na **AD SSO** (ne lokalna lozinka u produkciji).
-2. Callback sa tokenom → backend `module-platform` validacija.
-3. Frontend čuva JWT i šalje `Authorization: Bearer` na API.
+1. User hits login → redirect to **AD SSO** (not local password in production).
+2. Callback with token → backend `module-platform` validation.
+3. Frontend stores JWT and sends `Authorization: Bearer` on API calls.
 
-MVP: `LoginPage` + mock credentials — zameniti AD redirect kada backend SSO bude spreman.
+MVP: `LoginPage` + mock credentials — replace with AD redirect when backend SSO is ready.
 
-## Lokalno
+## Local dev
 
 ```bash
-# iz root monolita
-make dev-web
-# ili ceo stack
-make dev
+make dev-web    # from repo root
+make dev        # full stack
 ```
 
-Port: **5174** (da ne konflikuje sa mikroservisnim UI na 5173).
+Port: **5174** (avoids conflict with microservices UI on 5173).
 
-Backend dokumentacija: [docs/engineering/README.md](../../docs/engineering/README.md).
+All API calls use `/api/*` (Vite proxy to `localhost:8000`) — never hardcode backend URL.
+
+## Cursor
+
+- Rule (auto on edit): `.cursor/rules/frontend-web-client.mdc`
+- Skill: `.cursor/skills/frontend-dev-starter/SKILL.md`
+- Verify UI: `.cursor/skills/verifying-in-browser/SKILL.md`
+
+Backend docs: [docs/engineering/README.md](../../docs/engineering/README.md).

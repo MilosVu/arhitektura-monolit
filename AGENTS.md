@@ -1,8 +1,21 @@
 # AGENTS.md — Guide for AI Assistants and the Team
 
+**Team (humans):** read [docs/engineering/how-we-work/cursor-for-the-team.md](docs/engineering/how-we-work/cursor-for-the-team.md) first.
+
 ## AI rules
 
 Detailed operative rules: [.cursor/rules/README.md](.cursor/rules/README.md).
+
+**New chat / big feature:** run **`/onboard`** (or read [.cursor/skills/cortex-onboard/SKILL.md](.cursor/skills/cortex-onboard/SKILL.md)).
+
+| Command | Purpose |
+|---------|---------|
+| `/onboard` | Load docs + invariants before coding |
+| `/flct` | Grind until `make flct` passes |
+| `/api-smoke` | Hit FastAPI routes, report errors |
+| `/babysit-pr` | Keep open PR merge-ready |
+
+Full skill index: [.cursor/skills/README.md](.cursor/skills/README.md).
 
 ## Documentation
 
