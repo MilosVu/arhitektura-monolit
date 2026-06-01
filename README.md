@@ -2,18 +2,15 @@
 
 Ista MVP funkcionalnost kao [mikroservisna verzija](../arhitektura-mikroservisi/), ali sa **modularnim monolitom**: jedan FastAPI server + odvojeni Celery workeri.
 
-## Dokumentacija za tim
+## Dokumentacija
 
-| Dokument | Svrha |
-|----------|-------|
-| **[docs/onboarding/README.md](docs/onboarding/README.md)** | **Početak za development tim** |
-| [docs/onboarding/gde-sta-ide.md](docs/onboarding/gde-sta-ide.md) | Gde implementirati novi kod |
-| [MODULE-BOUNDARIES.md](MODULE-BOUNDARIES.md) | Granice modula |
-| [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md) | Arhitektura i integracije |
-| [docs/UPOREDBA-PROJEKAT-2.md](docs/UPOREDBA-PROJEKAT-2.md) | Razlike vs. referentni primer 2 |
-| [AGENTS.md](AGENTS.md) | Vodič za AI asistente |
-
-> Refactor plan: [REFACTOR-PLAN.md](REFACTOR-PLAN.md)
+| Publika | Ulazna tačka |
+|---------|--------------|
+| **Svi** | **[docs/README.md](docs/README.md)** |
+| PM / product | [docs/product/README.md](docs/product/README.md) |
+| Development tim | **[docs/engineering/README.md](docs/engineering/README.md)** |
+| Arhitektonske odluke | [docs/engineering/decisions/README.md](docs/engineering/decisions/README.md) |
+| AI asistenti | [AGENTS.md](AGENTS.md) |
 
 ## Arhitektura
 

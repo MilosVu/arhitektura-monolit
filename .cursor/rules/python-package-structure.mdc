@@ -1,0 +1,57 @@
+---
+description: Python package layout, naming, and layering in the monolith
+globs: packages/**/*.py,libs/**/*.py,apps/**/*.py
+alwaysApply: false
+---
+
+# Python Package Structure
+
+## Layout per module (hexagonal)
+
+```
+packages/module-{name}/
+└── module_{name}/
+    ├── api.py          # facade — sole cross-module entry point
+    ├── register.py     # register_services(registry)
+    ├── routes/         # HTTP driving adapter
+    ├── ports/          # Protocol interfaces
+    ├── services/       # use cases; depend on ports, not adapters
+    ├── adapters/       # port implementations
+    ├── schemas/        # Pydantic DTOs
+    └── tasks.py        # Celery (worker modules)
+```
+
+## Naming
+
+- Package: `module-platform`, import: `module_platform`
+- Services: `{Domain}Service`, `{Action}Orchestrator` (e.g. `SyncOrchestrator`)
+- Facades: `{Domain}Module` (e.g. `DocumentsModule`)
+- Celery tasks: verb + object (`sync_case_from_dms`, `ingest_document`)
+- Enums: in `cortex_core.enums`, not in modules
+
+## Layering
+
+```
+routes/  →  api.py  →  services/  →  ports/  ←  adapters/
+```
+
+## Shared libs
+
+| Lib | Contents |
+|-----|----------|
+| `cortex-models` | SQLAlchemy ORM, `get_db`, session factory |
+| `cortex-core` | ports, enums, settings, Celery, SearchPort |
+| `cortex-connectors` | Alfresco, Blob, OCR adapters |
+| `cortex-observability` | metrics/tracing — no business logic |
+
+No ORM in `cortex-core`. No use-cases in libs.
+
+## Style
+
+- Python 3.12+, type hints on public methods
+- Pydantic v2: `model_config = {"from_attributes": True}` for ORM mapping
+- Async only where I/O requires it; Celery tasks may be sync
+
+## Deep dive
+
+`docs/engineering/how-we-work/hexagonal-layout.md`

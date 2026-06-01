@@ -1,0 +1,60 @@
+---
+description: Celery tasks, worker apps, and async orchestration
+globs: **/tasks.py,apps/sync-worker/**/*.py,apps/ingestion-worker/**/*.py,**/module_sync/**/*.py
+alwaysApply: false
+---
+
+# Celery Workers
+
+## Invariant
+
+Two worker deployables; cross-worker communication via Celery signatures only — never direct module imports.
+
+## Deployables
+
+| App | Queue | Module | Celery app |
+|-----|-------|--------|------------|
+| `apps/sync-worker` | `sync` | module-dms-sync | `get_sync_celery_app()` |
+| `apps/ingestion-worker` | `ingestion` | module-ingestion | `get_ingestion_celery_app()` |
+
+## Task pattern
+
+```python
+@celery_app.task(name="module_dms_sync.tasks.sync_case_from_dms", bind=True)
+def sync_case_from_dms(self, case_id: int, job_id: str) -> dict:
+    session = get_session_factory()()
+    try:
+        ...
+    finally:
+        session.close()
+```
+
+- Task `name` must match `cortex_core.messaging.tasks` constant
+- Document status only via `DocumentsModule.mark_*`
+
+## Enqueue from HTTP
+
+```python
+_producer_app.send_task(TASK_SYNC_CASE, args=[case_id, job_id], queue=QUEUE_SYNC)
+```
+
+`module-sync` enqueues sync — not platform. No worker module imports.
+
+## Chain (dms → ingestion)
+
+```python
+chain(*ingestion_signatures, finalize_sync_job.si(job_id, total)).apply_async()
+```
+
+## Worker shell
+
+```python
+celery_app = get_sync_celery_app()
+import module_dms_sync.tasks  # noqa: F401 — register tasks
+```
+
+No domain logic in `apps/*` worker shells.
+
+## Deep dive
+
+`docs/engineering/decisions/0004-split-sync-ingestion-workers.md`

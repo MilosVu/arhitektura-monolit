@@ -1,0 +1,68 @@
+---
+description: Modular monolith overview, repo map, golden rules, and onboarding links
+alwaysApply: true
+---
+
+# Cortex Monolith Overview
+
+This repository is the **modular monolith** (not microservices). Work from the repo root.
+
+## Read first
+
+1. `docs/engineering/README.md`
+2. `docs/engineering/how-we-work/feature-placement.md`
+3. `docs/engineering/architecture/module-boundaries.md`
+4. `AGENTS.md`
+
+Comparison with reference project 2: `docs/engineering/reference/comparison-project-2.md`
+
+## Repo map
+
+```
+apps/cortex-server/     → thin FastAPI shell (routers, app.state)
+apps/sync-worker/       → Celery -Q sync
+apps/ingestion-worker/  → Celery -Q ingestion
+apps/web-client/        → React (Vite)
+scripts/                → dev.sh, seed-neo4j.sh
+
+packages/module-platform/    → auth, cases, audit, system
+packages/module-documents/   → Document CRUD + lifecycle (ONLY status owner)
+packages/module-chat/        → Redis threads, chat API
+packages/module-sync/        → SyncOrchestrator, job trigger/polling
+packages/module-dms-sync/    → DMS delta sync (Celery)
+packages/module-ingestion/   → OCR → chunk → embed → Weaviate (Celery)
+packages/module-ai/          → LangGraph agents (rag, legal, nlp)
+
+libs/cortex-core/            → ports, enums, settings, Celery, SearchPort
+libs/cortex-models/          → ORM (User, Case, Document, SyncJob, AuditLog)
+libs/cortex-connectors/      → Alfresco, Blob, OCR adapters
+libs/cortex-observability/   → metrics/tracing hooks
+```
+
+## Golden rules
+
+1. **Thin app shell** — no domain logic in `apps/*`, wiring only.
+2. **One module = one domain** — do not put features in the wrong module.
+3. **Facade pattern** — cross-module calls only via `module_*/api.py`.
+4. **ORM only in `cortex-models`** — do not duplicate models in workers.
+5. **`Document.status`** — only `DocumentsModule.mark_*()`, never direct ORM writes in workers.
+6. **After boundary changes** — run `make lint-imports`.
+
+## Before coding
+
+- New feature → decision table in `feature-placement.mdc`
+- HTTP → `schemas/` + `api.py` + `routes/` in the owning module
+- Worker → `tasks.py` + `DocumentsModule.mark_*` for status
+- Frontend → `apps/web-client/ONBOARDING.md`
+
+## Do not
+
+- Reintroduce `module-alfresco` or `cortex-worker`.
+- Add Temporal, CQRS read/write paths, or separate BM25/GDB services.
+- Import `module_ai.agents` or `module_*.services` from another module.
+- Add business logic to `cortex-server/main.py`.
+
+## Deep dive
+
+- ADRs: `docs/engineering/decisions/README.md`
+- Diagram: `architecture.mmd`

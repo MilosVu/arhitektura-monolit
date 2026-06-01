@@ -1,0 +1,37 @@
+---
+description: English-only identifiers, comments, docstrings, and AI-authored text
+alwaysApply: true
+---
+
+# English Only
+
+## Invariant
+
+All **new or edited** code, comments, docstrings, Cursor rules, and AI-drafted commit/PR text must be in **English**.
+
+## STOP list
+
+- Serbian/Cyrillic identifiers (`lista_slucajeva`, `predmet_id`) → use English names
+- Serbian docstrings on new code → translate to English
+- Mixed-language comments → English only
+
+## Patterns
+
+```python
+# BAD
+def lista_slucajeva():  # Vraća sve predmete
+    ...
+
+# GOOD
+def list_cases():  # Returns cases owned by the current user
+    ...
+```
+
+## Exceptions
+
+- Future localized product copy under `docs/product/` (non-English user-facing text)
+- Do not rename existing symbols solely for language — only when you touch that code
+
+## Deep dive
+
+`docs/engineering/README.md`

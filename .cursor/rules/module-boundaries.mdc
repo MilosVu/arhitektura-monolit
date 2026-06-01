@@ -1,0 +1,66 @@
+---
+description: Module boundaries, allowed dependencies, and import-linter rules
+globs: packages/**/*.py,libs/**/*.py,apps/**/*.py
+alwaysApply: false
+---
+
+# Module Boundaries
+
+## Invariant
+
+Cross-module communication uses **facades only** (`module_*/api.py`). Enforce with `make lint-imports`.
+
+## Allowed dependencies
+
+| Module | May import |
+|--------|------------|
+| `module-platform` | `cortex-core`, `cortex-models`, `module-*.api` |
+| `module-documents` | `cortex-core`, `cortex-models` |
+| `module-chat` | `cortex-core`, `module-ai.api` |
+| `module-sync` | `cortex-core`, `cortex-models` |
+| `module-dms-sync` | `cortex-core`, `cortex-models`, `cortex-connectors`, `module-documents.api` |
+| `module-ingestion` | `cortex-core`, `cortex-models`, `cortex-connectors`, `module-documents.api` |
+| `module-ai` | `cortex-core` (SearchPort read) |
+
+## Patterns
+
+```python
+# BAD — internal import from another module
+from module_ai.agents.rag.rag_agent import RagAgent
+
+# GOOD — facade only
+from module_ai.api import AiModule
+```
+
+```python
+# BAD — worker mutates Document.status directly
+doc.status = DocumentStatus.READY.value
+
+# GOOD — lifecycle via DocumentsModule
+documents.mark_ready(document_id, db, page_count=10)
+```
+
+```python
+# BAD — dms-sync imports ingestion module
+from module_ingestion.tasks import ingest_document
+
+# GOOD — Celery task constants
+from cortex_core.messaging.tasks import TASK_INGEST_DOCUMENT, QUEUE_INGESTION
+celery_app.send_task(TASK_INGEST_DOCUMENT, args=[doc_id, job_id], queue=QUEUE_INGESTION)
+```
+
+## Celery task constants
+
+Always use `cortex_core.messaging.tasks` — never hardcode task name strings.
+
+## Checklist
+
+1. Which module owns the domain? (`feature-placement.md`)
+2. New port in `cortex-core` or adapter in `cortex-connectors`?
+3. Cross-module call via new `api.py` method?
+4. Update import-linter contract in root `pyproject.toml`
+5. Run `make lint-imports`
+
+## Deep dive
+
+`docs/engineering/architecture/module-boundaries.md`

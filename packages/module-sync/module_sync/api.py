@@ -1,6 +1,6 @@
 """Public facade for the sync domain module."""
 
-from cortex_core.domain.exceptions import ForbiddenError
+from cortex_core.errors import ForbiddenError
 from cortex_models import Case, User
 from fastapi import HTTPException
 from sqlalchemy.orm import Session

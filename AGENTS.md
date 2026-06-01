@@ -1,59 +1,48 @@
-# AGENTS.md — vodič za AI asistente i tim
+# AGENTS.md — Guide for AI Assistants and the Team
 
-Radimo u **`arhitektura-monolit/`** (modularni monolit). Referentni primer **`arhitektura-monolit-projekat-2/`** — samo čitanje ideja, **ne menjati** taj folder.
+## AI rules
 
-## Obavezna dokumentacija
+Detailed operative rules: [.cursor/rules/README.md](.cursor/rules/README.md).
 
-| Dokument | Svrha |
-|----------|-------|
-| [docs/onboarding/README.md](docs/onboarding/README.md) | Onboarding tima |
-| [docs/onboarding/gde-sta-ide.md](docs/onboarding/gde-sta-ide.md) | Gde implementirati feature |
-| [MODULE-BOUNDARIES.md](MODULE-BOUNDARIES.md) | Granice modula, import-linter |
-| [REFACTOR-PLAN.md](REFACTOR-PLAN.md) | Refactor istorija i odluke |
-| [docs/UPOREDBA-PROJEKAT-2.md](docs/UPOREDBA-PROJEKAT-2.md) | Šta preuzeti iz projekta 2 |
-| [docs/ARCHITECTURE-READY.md](docs/ARCHITECTURE-READY.md) | Arhitektura spremna za tim |
-| [docs/onboarding/prvi-feature.md](docs/onboarding/prvi-feature.md) | Walkthrough prvog feature-a |
+## Documentation
 
-Cursor rules: `../.cursor/rules/` (workspace `Architecture/.cursor/rules/`).
 
-## Komande
+| Doc                                                                                        | Purpose                      |
+| ------------------------------------------------------------------------------------------ | ---------------------------- |
+| [docs/README.md](docs/README.md)                                                           | Product vs engineering split |
+| [docs/engineering/README.md](docs/engineering/README.md)                                   | Developer onboarding         |
+| [docs/engineering/decisions/README.md](docs/engineering/decisions/README.md)               | ADRs                         |
+| [docs/engineering/how-we-work/feature-placement.md](docs/engineering/how-we-work/feature-placement.md) | Feature placement            |
+
+
+## Commands
 
 ```bash
-make infra-up
-make install
-make dev
-make lint-imports
-make flct          # format + lint + mypy + import-linter + test
-make db-setup      # alembic upgrade head
+make infra-up && make install && make dev
+make lint-imports    # after boundary changes
+make flct            # format + lint + mypy + import-linter + test
+make db-setup        # alembic upgrade head
 ```
 
-Skripte: `scripts/dev.sh`, `scripts/seed-neo4j.sh`.
+Scripts: `scripts/dev.sh`, `scripts/seed-neo4j.sh`.
 
-## Repo mapa
+## Invariants
 
-```
-apps/cortex-server, sync-worker, ingestion-worker, web-client
-packages/module-platform, module-documents, module-chat, module-sync,
-         module-dms-sync, module-ingestion, module-ai
-libs/cortex-core, cortex-models, cortex-connectors, cortex-observability
-```
+1. Thin app shell — no domain logic in `apps/*/main.py`
+2. Facade only — cross-module via `module_*/api.py`
+3. `Document.status` — only `DocumentsModule.mark_*()`
+4. Celery — constants from `cortex_core.messaging.tasks`
+5. After boundary changes — `make lint-imports`
+6. ORM — only `cortex-models`
 
-## Kritična pravila
+## New architectural decision
 
-1. **Tanak app shell** — bez domenske logike u `apps/*/main.py`.
-2. **Facade only** — cross-module preko `module_*/api.py`.
-3. **`Document.status`** — samo `DocumentsModule.mark_*()`.
-4. **Celery** — `cortex_core.messaging.tasks` konstante.
-5. **Posle promene granica** — `make lint-imports`.
-6. **ORM** — samo `cortex-models`.
+Use [docs/engineering/decisions/template.md](docs/engineering/decisions/template.md) and add an ADR under `docs/engineering/decisions/`.
 
-## Auth (cilj)
+## Do not
 
-AD/SSO preko frontenda → backend validacija → lokalni User za RBAC → Alfresco po korisničkom ACL. Detalji: [docs/onboarding/auth.md](docs/onboarding/auth.md).
+- Reintroduce `module-alfresco` or `cortex-worker`
+- Import `module_ai.agents` from other modules
+- Write `Document.status` directly in workers
 
-## Šta NE raditi
-
-- Vraćati `module-alfresco` ili jedan `cortex-worker`.
-- Importovati `module_ai.agents` iz drugih modula.
-- Direktan ORM write statusa u workerima.
-- Menjati `arhitektura-monolit-projekat-2/`.
+Auth target: AD/SSO via frontend → backend validation → local User for RBAC. See [docs/engineering/how-we-work/auth.md](docs/engineering/how-we-work/auth.md).

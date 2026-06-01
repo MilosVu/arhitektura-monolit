@@ -1,0 +1,52 @@
+---
+description: Which module owns a new feature — decision table and STOP list
+alwaysApply: true
+---
+
+# Feature Placement
+
+## Invariant
+
+Before writing code, identify the **owning domain module**. One module = one domain.
+
+## Decision table
+
+| Question / feature | Module |
+|--------------------|--------|
+| Login, JWT, user, case list, audit? | `module-platform` |
+| Document CRUD, status, re-ingest? | `module-documents` |
+| Chat thread, messages, Redis? | `module-chat` |
+| Sync job trigger, polling, orchestrator? | `module-sync` |
+| DMS download, delta sync, Blob? | `module-dms-sync` (Celery) |
+| OCR, chunk, embed, Weaviate upsert? | `module-ingestion` (Celery) |
+| RAG, translate, law lookup, NER, agents? | `module-ai` |
+| New ORM entity? | `cortex-models` |
+| New external API adapter? | `cortex-connectors` + port in `cortex-core` |
+
+## STOP list
+
+- Document route in platform → **STOP** → `module-documents`
+- Worker sets `doc.status` directly → **STOP** → `DocumentsModule.mark_*`
+- Import `module_ai.agents` from platform/chat → **STOP** → `AiModule` facade
+- Business logic in `cortex-server/main.py` → **STOP** → module `services/` + `api.py`
+- New Celery task outside dms-sync/ingestion → likely wrong module
+
+## New HTTP endpoint checklist
+
+1. Which module owns the domain?
+2. DTO in `module_*/schemas/`
+3. Method in `module_*/api.py`
+4. Thin route in `module_*/routes/`
+5. `get_*_module` in deps + `app.state` in main.py
+6. `include_router` in cortex-server
+
+## New async pipeline step
+
+1. Sync (I/O) or ingestion (CPU/GPU)?
+2. Task in the right `tasks.py` with constant from `cortex_core.messaging.tasks`
+3. Document lifecycle via `DocumentsModule`
+4. Update import-linter contract; run `make lint-imports`
+
+## Deep dive
+
+`docs/engineering/how-we-work/feature-placement.md`

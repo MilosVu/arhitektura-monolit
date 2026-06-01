@@ -31,4 +31,4 @@ make dev
 
 Port: **5174** (da ne konflikuje sa mikroservisnim UI na 5173).
 
-Backend dokumentacija: [docs/onboarding/README.md](../../docs/onboarding/README.md).
+Backend dokumentacija: [docs/engineering/README.md](../../docs/engineering/README.md).

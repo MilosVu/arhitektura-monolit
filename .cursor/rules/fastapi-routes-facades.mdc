@@ -1,0 +1,60 @@
+---
+description: FastAPI thin routes, facades, deps, and cortex-server wiring
+globs: **/routes/**/*.py,**/api.py,**/deps.py,apps/cortex-server/**/*.py
+alwaysApply: false
+---
+
+# FastAPI Routes and Facades
+
+## Invariant
+
+Routes call **facades only** — no SQL, no direct service imports.
+
+## Route pattern
+
+```python
+@router.get("/cases/{case_id}/documents", response_model=list[DocumentSummary])
+def list_documents(
+    case_id: int,
+    documents: Annotated[DocumentsModule, Depends(get_documents_module)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db),
+):
+    return documents.list_by_case(case_id, current_user, db)
+```
+
+- Use `Annotated[..., Depends(...)]` for modules and user
+- Always set explicit `response_model`
+- Router tags: `APIRouter(tags=["documents"])`
+
+## deps.py
+
+```python
+def get_documents_module(request: Request) -> DocumentsModule:
+    return request.app.state.documents_module
+```
+
+Modules are created in `cortex-server/main.py` and stored in `app.state`.
+
+## Facade (api.py)
+
+- One class per module: `DocumentsModule`, `SyncModule`, ...
+- Public methods = use-case boundaries
+- `HTTPException` in facade for 404/403; routes stay thin
+- Facade does not import FastAPI routers
+
+## Route ownership
+
+| Module | Routes |
+|--------|--------|
+| module-platform | `/auth`, `/cases`, `/audit`, `/system` |
+| module-documents | `/cases/{id}/documents`, `/documents/{id}` |
+| module-chat | `/chat/*` |
+| module-sync | `/cases/{id}/sync`, `/sync/{job_id}` |
+| module-ai | `/rag`, `/laws`, `/translate` |
+
+Do not move documents/chat/sync back into platform.
+
+## Deep dive
+
+`docs/engineering/how-we-work/first-feature.md`

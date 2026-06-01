@@ -1,0 +1,49 @@
+---
+description: Makefile, uv workspace, import-linter, and pre-commit checks
+globs: pyproject.toml,Makefile,**/pyproject.toml
+alwaysApply: false
+---
+
+# Quality and Tooling
+
+## Pre-commit / PR checklist
+
+```bash
+uv sync --all-packages
+make lint-imports
+make flct   # format + lint + mypy + import-linter + test
+```
+
+- Import-linter: 10 contracts in root `pyproject.toml`
+- New package → update `[tool.uv.workspace]` members
+- Cross-module import change → update `[[tool.importlinter.contracts]]`
+
+## Makefile
+
+| Command | Purpose |
+|---------|---------|
+| `make dev` | server + workers + flower + web |
+| `make lint-imports` | module boundaries |
+| `make flct` | full quality gate |
+| `make k8s-build` | Docker images |
+
+## Docker / K8s
+
+- `SERVICE`: `cortex-server`, `sync-worker`, `ingestion-worker`, `flower`
+- Do not use `cortex-worker` — removed
+- Update `infra/docker/Dockerfile.python` when adding packages
+
+## When changing architecture
+
+- `docs/engineering/architecture/module-boundaries.md`
+- `architecture.mmd`
+- New ADR in `docs/engineering/decisions/` for significant decisions
+
+## Minimal diff
+
+- One PR = one domain concern when possible
+- No unrelated refactors; no `.env` / credentials in git
+
+## Deep dive
+
+`docs/engineering/how-we-work/first-pr-checklist.md`

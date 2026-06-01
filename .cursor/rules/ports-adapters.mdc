@@ -1,0 +1,45 @@
+---
+description: Ports and adapters — cortex-core protocols and cortex-connectors
+globs: libs/**/*.py,**/adapters/**/*.py
+alwaysApply: false
+---
+
+# Ports and Adapters
+
+## Invariant
+
+Domain depends on **ports** (ABC/Protocol); infrastructure implements **adapters**.
+
+## Where things live
+
+| Type | Location | Example |
+|------|----------|---------|
+| Port | `cortex_core/ports/` | `AlfrescoPort`, `SearchPort` |
+| Shared infra | `cortex_core/infrastructure/` | Redis, Weaviate client |
+| Stub/prod adapter | `cortex_connectors/` | `StubAlfrescoClient` |
+| Module wrapper | `module_*/adapters/` | `WeaviateSearchStore` |
+
+## SearchPort ownership
+
+- **Read**: `module-ai` (`search_chunks`)
+- **Write**: `module-ingestion` (`upsert_document_chunks`)
+- Shared DTO: `ChunkHit` in the port
+
+## External systems
+
+| System | Port | Connector |
+|--------|------|-----------|
+| Alfresco/DMS | `AlfrescoPort` | `cortex_connectors.alfresco` |
+| Blob/S3 | `BlobPort` | `cortex_connectors.blob` |
+| OCR | `OCRPort` | `cortex_connectors.ocr` |
+| LLM | `LLMPort` | `cortex_core.infrastructure.llm` |
+
+New external system: port in core → adapter in connectors → use in module.
+
+## Do not put in cortex-core
+
+ORM models, FastAPI routes, Celery tasks, feature business rules, agent prompts.
+
+## Deep dive
+
+`docs/engineering/decisions/0008-searchport-weaviate.md`

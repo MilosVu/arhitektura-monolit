@@ -4,13 +4,13 @@ from datetime import UTC, datetime
 
 import httpx
 from cortex_core.celery_app import create_celery_app
+from cortex_core.infrastructure.redis.client import RedisCacheAdapter
 from cortex_core.infrastructure.weaviate.client import ping_weaviate
 from cortex_core.settings import get_settings
 from cortex_models import get_engine
 from module_ai.api import AiModule
 from sqlalchemy import text
 
-from module_platform.infrastructure.redis import ping_redis
 from module_platform.schemas import ComponentStatus, SystemStatusResponse
 
 settings = get_settings()
@@ -49,7 +49,7 @@ def _check_postgres() -> bool:
 
 
 def _check_redis() -> bool:
-    return ping_redis()
+    return RedisCacheAdapter().ping()
 
 
 def _check_weaviate() -> bool:

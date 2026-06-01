@@ -1,0 +1,41 @@
+---
+description: React web-client conventions and API calls to the monolith
+globs: apps/web-client/**/*
+alwaysApply: false
+---
+
+# Web Client (React)
+
+## Invariant
+
+All API calls go through the Vite proxy (`/api/*`) — do not hardcode server URLs in components.
+
+## Stack
+
+- React + Vite + pnpm
+- Port **5174** for monolith (5173 is microservices)
+- Proxy to `cortex-server:8000`
+
+## API paths
+
+- Auth: JWT Bearer from `/auth/login`
+- Documents: `/cases/{id}/documents`, `/documents/{id}`
+- Chat: `/chat/*`
+- Sync: `/cases/{id}/sync`, `/sync/{jobId}`
+- AI: `/rag`, `/laws`, `/translate`
+
+## When backend routes change
+
+1. Identify the owning module (not always platform)
+2. Update frontend fetch paths if API broke
+3. Test login → cases → sync → search → chat
+
+## Style
+
+- Functional components; hooks for reusable logic
+- No extra state library unless needed
+- TypeScript strict; types aligned with backend schemas
+
+## Deep dive
+
+`apps/web-client/ONBOARDING.md`

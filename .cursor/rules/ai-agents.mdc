@@ -1,0 +1,51 @@
+---
+description: module-ai LangGraph agents, RAG, and SearchPort read path
+globs: **/module_ai/**/*.py
+alwaysApply: false
+---
+
+# AI Agents and RAG
+
+## Invariant
+
+Agents use **SearchPort read** and **AiModule facade** for external access — no direct PostgreSQL Document CRUD.
+
+## Agent layout
+
+```
+module_ai/agents/
+├── base.py
+├── rag/      # RagAgent
+├── legal/    # LawLinkAgent (Neo4j)
+└── nlp/      # ChatAgent, TranslationAgent
+```
+
+New agents go in the matching subfolder, not `agents/` root.
+
+## Agent pattern
+
+```python
+class RagAgent(BaseLangGraphAgent):
+    def __init__(self, search: WeaviateSearchStore | None = None, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._search = search or WeaviateSearchStore()
+
+    async def invoke(self, state: AgentState) -> AgentState:
+        chunks = self._search.search_chunks(query, case_id=case_id, limit=5)
+        return {**state, "retrieved_chunks": [...]}
+```
+
+## AiModule facade
+
+- Public API: `stream_chat`, `rag_search`, `translate`, `lookup_law`
+- Routes in `module_ai/routes/` call `AiModule` directly
+- **module-chat** delegates stream to `AiModule.stream_chat` — do not import agents
+
+## Dependencies
+
+- `module-ai` must not import: platform, documents, sync, dms-sync, ingestion
+- LLM via `services/llm_router.py` and `cortex_core.ports.llm`
+
+## Deep dive
+
+`docs/engineering/decisions/0008-searchport-weaviate.md`

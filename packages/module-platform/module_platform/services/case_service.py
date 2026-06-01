@@ -1,7 +1,7 @@
 """Case management — lista slučajeva filtrirana po AD ownership-u."""
 
 from cortex_core.base.service import BaseService
-from cortex_core.domain.exceptions import ForbiddenError
+from cortex_core.errors import ForbiddenError
 from cortex_models import Case, Document, User
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload

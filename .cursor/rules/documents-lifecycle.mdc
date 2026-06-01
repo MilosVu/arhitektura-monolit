@@ -1,0 +1,58 @@
+---
+description: Document CRUD, lifecycle status, and ownership rules
+globs: **/module_documents/**/*.py,**/module_dms_sync/**/*.py,**/module_ingestion/**/*.py
+alwaysApply: false
+---
+
+# Documents Lifecycle
+
+## Invariant
+
+**Only `module-documents`** may change `Document.status`.
+
+## State machine
+
+```
+pending → syncing → ingesting → ready
+                           ↘ failed
+```
+
+Enum: `cortex_core.enums.DocumentStatus`
+
+## DocumentsModule methods
+
+| Method | Caller | Purpose |
+|--------|--------|---------|
+| `list_by_case`, `get`, `delete` | HTTP routes | CRUD with auth |
+| `create(metadata)` | module-dms-sync | Register doc after DMS sync |
+| `trigger_reingest` | HTTP | Enqueue ingestion |
+| `mark_syncing` | module-dms-sync | Status → syncing |
+| `mark_ingesting` | module-ingestion | Status → ingesting |
+| `mark_ready` | module-ingestion | Status → ready |
+| `mark_failed` | any worker | Status → failed |
+
+## Pipeline
+
+1. **module-sync** — creates SyncJob, enqueues `TASK_SYNC_CASE`
+2. **module-dms-sync** — DMS delta, `create()` + `mark_syncing()`, Blob, enqueue ingest
+3. **module-ingestion** — `mark_ingesting()`, OCR/chunk/embed, Weaviate, `mark_ready()`
+
+## Patterns
+
+```python
+detail = documents.create(case_id=case.id, metadata={...}, db=session)
+documents.mark_syncing(detail.id, session)
+# ... ingestion ...
+documents.mark_ready(document_id, db, page_count=len(chunks))
+```
+
+Workers may **read** `Document`/`Case` from ORM; they must **not** set `doc.status` directly.
+
+## SearchPort
+
+- Write: `module-ingestion` via `SearchPort.upsert_document_chunks`
+- Read: `module-ai` via `WeaviateSearchStore.search_chunks`
+
+## Deep dive
+
+`docs/engineering/decisions/0002-documents-module-status-ownership.md`

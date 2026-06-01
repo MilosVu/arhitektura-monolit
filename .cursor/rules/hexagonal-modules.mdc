@@ -1,0 +1,34 @@
+---
+description: Hexagonal layout — domain, ports, adapters, services per module
+globs: packages/**/*.py
+alwaysApply: false
+---
+
+# Hexagonal Modules
+
+## Invariant
+
+`services/` depend on **ports**, not concrete **adapters**. Wire adapters in `register.py`.
+
+## Checklist
+
+1. Define port (`ports/` or `cortex_core/ports/`) before implementation
+2. Adapter implements port; service receives port in `__init__`
+3. `services/` must not import `adapters/` directly
+4. `api.py` facade delegates to service; `routes/` are HTTP-only
+5. Wire in `register.py` (ServiceRegistry)
+
+## Patterns
+
+```python
+# BAD — service imports concrete adapter
+from module_documents.adapters.postgres_document_repository import PostgresDocumentRepository
+
+# GOOD — port type in constructor; adapter wired in register.py
+class DocumentService:
+    def __init__(self, repo: DocumentRepositoryPort) -> None: ...
+```
+
+## Deep dive
+
+`docs/engineering/how-we-work/hexagonal-layout.md`

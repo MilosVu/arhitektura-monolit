@@ -22,8 +22,7 @@ class RedisCacheAdapter(CachePort):
     """
     Niskonivojski Redis wrapper.
 
-    Koriste ga: AdSessionCache, ChatRepository, SyncProgressPublisher,
-    LangGraphCheckpointStore.
+    Koriste ga: AdSessionCache, SyncProgressPublisher, LangGraphCheckpointStore.
     """
 
     def __init__(self, client: redis.Redis | None = None) -> None:

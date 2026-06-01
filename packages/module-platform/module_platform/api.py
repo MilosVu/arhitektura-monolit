@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import secrets
 
-from cortex_core.errors import NotAuthenticatedError
+from cortex_core.errors import ForbiddenError, NotAuthenticatedError
 from cortex_models import User
 from fastapi import HTTPException, status
 from module_ai.api import AiModule
@@ -75,8 +75,6 @@ class PlatformModule:
         return CaseService(db).list_for_user(user)
 
     def get_case(self, case_id: int, user: User, db: Session) -> CaseDetail:
-        from cortex_core.domain.exceptions import ForbiddenError
-
         try:
             return CaseService(db).get_detail(case_id, user)
         except ForbiddenError:

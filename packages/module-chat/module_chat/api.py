@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from cortex_core.domain.exceptions import ForbiddenError
+from cortex_core.errors import ForbiddenError
 from cortex_models import Case, User
 from fastapi import HTTPException
 from module_ai.api import AiModule

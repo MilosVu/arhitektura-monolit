@@ -1,10 +1,10 @@
 from typing import Annotated
 
+from cortex_models import User
 from fastapi import APIRouter, Depends
 
 from module_platform.api import PlatformModule
 from module_platform.deps import get_current_user, get_platform_module
-from module_platform.models import User
 from module_platform.schemas import SystemStatusResponse
 
 router = APIRouter(prefix="/system", tags=["system"])
