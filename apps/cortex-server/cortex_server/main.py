@@ -11,6 +11,8 @@ from module_chat.register import register_services as register_chat
 from module_chat.routes import router as chat_router
 from module_documents.register import register_services as register_documents
 from module_documents.routes import router as documents_router
+from module_law_sync.register import register_services as register_law_sync
+from module_law_sync.routes import router as law_sync_router
 from module_platform.register import register_services as register_platform
 from module_platform.routes import router as platform_router
 from module_sync.register import register_services as register_sync
@@ -30,6 +32,7 @@ async def lifespan(app: FastAPI):
     documents_module = register_documents(registry)
     chat_module = register_chat(registry, ai_module=ai_module)
     sync_module = register_sync(registry)
+    law_sync_module = register_law_sync(registry)
 
     app.state.registry = registry
     app.state.ai_module = ai_module
@@ -37,6 +40,7 @@ async def lifespan(app: FastAPI):
     app.state.documents_module = documents_module
     app.state.chat_module = chat_module
     app.state.sync_module = sync_module
+    app.state.law_sync_module = law_sync_module
 
     try:
         ai_module.seed_laws_on_startup()
@@ -66,6 +70,7 @@ app.include_router(platform_router)
 app.include_router(documents_router)
 app.include_router(chat_router)
 app.include_router(sync_router)
+app.include_router(law_sync_router)
 app.include_router(ai_router)
 
 

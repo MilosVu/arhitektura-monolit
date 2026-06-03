@@ -12,6 +12,6 @@ def get_sync_celery_app() -> Celery:
     if _sync_app is None:
         _sync_app = create_celery_app(
             "sync_worker",
-            include=["module_dms_sync.tasks"],
+            include=["module_dms_sync.tasks", "module_law_sync.tasks"],
         )
     return _sync_app

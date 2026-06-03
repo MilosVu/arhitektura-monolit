@@ -10,6 +10,9 @@ QUEUE_INGESTION = "ingestion"
 TASK_SYNC_CASE = "module_dms_sync.tasks.sync_case_from_dms"
 TASK_INGEST_DOCUMENT = "module_ingestion.tasks.ingest_document"
 TASK_FINALIZE_SYNC = "module_dms_sync.tasks.finalize_sync_job"
+TASK_SYNC_LAW_CORPUS = "module_law_sync.tasks.sync_law_corpus"
+TASK_SYNC_LAW_PROVISION = "module_law_sync.tasks.sync_law_provision"
+TASK_REINDEX_LAW_VERSION = "module_law_sync.tasks.reindex_law_version"
 
 
 class BaseWorkerTask(ABC):

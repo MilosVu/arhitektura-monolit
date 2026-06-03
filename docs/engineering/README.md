@@ -20,6 +20,8 @@ Starting point for the **development team**: architecture, onboarding, decisions
 
 Why something was built a certain way → [decisions/README.md](decisions/README.md)
 
+Implementation plans (multi-phase features) → [plans/](plans/)
+
 ## Reference
 
 - [reference/comparison-project-2.md](reference/comparison-project-2.md) — what we take from reference project 2

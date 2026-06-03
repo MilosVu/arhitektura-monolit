@@ -30,12 +30,13 @@ packages/module-documents/   → Document CRUD + lifecycle (ONLY status owner)
 packages/module-chat/        → Redis threads, chat API
 packages/module-sync/        → SyncOrchestrator, job trigger/polling
 packages/module-dms-sync/    → DMS delta sync (Celery)
-packages/module-ingestion/   → OCR → chunk → embed → Weaviate (Celery)
-packages/module-ai/          → LangGraph agents (rag, legal, nlp)
+packages/module-ingestion/   → OCR → chunk → embed → Weaviate (case docs, Celery)
+packages/module-law-sync/    → Swiss law corpus sync (Celery, -Q sync) — ADR 0009
+packages/module-ai/          → LangGraph agents (rag, legal read, nlp)
 
 libs/cortex-core/            → ports, enums, settings, Celery, SearchPort
-libs/cortex-models/          → ORM (User, Case, Document, SyncJob, AuditLog)
-libs/cortex-connectors/      → Alfresco, Blob, OCR adapters
+libs/cortex-models/          → ORM (User, Case, Document, SyncJob, LawVersion, …)
+libs/cortex-connectors/      → Alfresco, Blob, OCR, Swiss law source adapters
 libs/cortex-observability/   → metrics/tracing hooks
 ```
 
@@ -60,9 +61,11 @@ libs/cortex-observability/   → metrics/tracing hooks
 - Reintroduce `module-alfresco` or `cortex-worker`.
 - Add Temporal, CQRS read/write paths, or separate BM25/GDB services.
 - Import `module_ai.agents` or `module_*.services` from another module.
+- Put law corpus sync in `module-ai` or `module-ingestion` (use `module-law-sync`).
 - Add business logic to `cortex-server/main.py`.
 
 ## Deep dive
 
 - ADRs: `docs/engineering/decisions/README.md`
+- Law corpus plan: `docs/engineering/plans/law-corpus-sync.md`
 - Diagram: `architecture.mmd`

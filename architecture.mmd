@@ -20,6 +20,7 @@ flowchart TB
             MCHAT["module-chat<br/>──────────────<br/>Threads · Redis"]
             MSYNC["module-sync<br/>──────────────<br/>SyncOrchestrator"]
             MA["module-ai<br/>──────────────<br/>RAG · NER · Laws · NLP"]
+            MLS["module-law-sync<br/>──────────────<br/>Law corpus sync"]
         end
 
         CORE["libs/cortex-core · cortex-models · connectors"]
@@ -29,12 +30,14 @@ flowchart TB
         subgraph WORKER_ROW [ ]
             direction LR
             MDMS["module-dms-sync<br/>──────────────<br/>sync-worker shell"]
+            MLAW["module-law-sync<br/>──────────────<br/>sync-worker shell"]
             MING["module-ingestion<br/>──────────────<br/>ingestion-worker shell"]
         end
 
         CS --> HTTP_ROW
         MSYNC --> MQ
         MQ --> MDMS
+        MQ --> MLAW
         MDMS --> MING
 
         HTTP_ROW --> CORE
@@ -96,6 +99,7 @@ flowchart TB
     class MCHAT chatStyle
     class MSYNC syncStyle
     class MA aiStyle
+    class MLS aiStyle
     class MDMS dmsStyle
     class MING ingestionStyle
     class CORE coreStyle

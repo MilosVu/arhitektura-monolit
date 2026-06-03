@@ -26,6 +26,7 @@ We record **architectural decisions**, trade-offs, and open questions here. Each
 | [0006](0006-celery-without-domain-events.md) | Celery task queue without domain events | accepted | 2025 |
 | [0007](0007-module-dms-sync-naming.md) | DMS-agnostic name (`module-dms-sync`) | accepted | 2025 |
 | [0008](0008-searchport-weaviate.md) | `SearchPort` — ingestion write, AI read | accepted | 2025 |
+| [0009](0009-law-corpus-sync.md) | `module-law-sync` — Swiss law corpus ingestion | accepted | 2026-06-01 |
 
 ## History
 

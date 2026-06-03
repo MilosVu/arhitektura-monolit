@@ -18,8 +18,9 @@ Before writing code, identify the **owning domain module**. One module = one dom
 | Chat thread, messages, Redis? | `module-chat` |
 | Sync job trigger, polling, orchestrator? | `module-sync` |
 | DMS download, delta sync, Blob? | `module-dms-sync` (Celery) |
-| OCR, chunk, embed, Weaviate upsert? | `module-ingestion` (Celery) |
-| RAG, translate, law lookup, NER, agents? | `module-ai` |
+| OCR, chunk, embed, Weaviate upsert (case docs)? | `module-ingestion` (Celery) |
+| Swiss law sync, versioning, law index write? | `module-law-sync` (Celery, `sync` queue) |
+| RAG, law lookup (read), translate, NER, agents? | `module-ai` |
 | New ORM entity? | `cortex-models` |
 | New external API adapter? | `cortex-connectors` + port in `cortex-core` |
 
@@ -29,7 +30,8 @@ Before writing code, identify the **owning domain module**. One module = one dom
 - Worker sets `doc.status` directly → **STOP** → `DocumentsModule.mark_*`
 - Import `module_ai.agents` from platform/chat → **STOP** → `AiModule` facade
 - Business logic in `cortex-server/main.py` → **STOP** → module `services/` + `api.py`
-- New Celery task outside dms-sync/ingestion → likely wrong module
+- New Celery task outside dms-sync / law-sync / ingestion → likely wrong module
+- Law sync in `module-ai` or `module-ingestion` → **STOP** → `module-law-sync`
 
 ## New HTTP endpoint checklist
 

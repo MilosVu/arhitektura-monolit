@@ -5,11 +5,13 @@ from __future__ import annotations
 import os
 
 from cortex_core.ports.alfresco import AlfrescoPort
+from cortex_core.ports.law_source import LawSourcePort
 from cortex_core.ports.ocr import OCRPort
 
 from cortex_connectors.alfresco.stub_client import StubAlfrescoClient
 from cortex_connectors.blob.port import BlobPort
 from cortex_connectors.blob.stub_store import StubBlobStore
+from cortex_connectors.law.stub_source import StubLawSource
 from cortex_connectors.ocr.stub_adapter import StubOCRAdapter
 
 _CONNECTORS_MODE = os.getenv("CORTEX_CONNECTORS_MODE", "stub").lower()
@@ -37,3 +39,11 @@ def get_ocr_adapter() -> OCRPort:
             f"Prod OCR adapter not implemented (mode={_CONNECTORS_MODE})"
         )
     return StubOCRAdapter()
+
+
+def get_law_source() -> LawSourcePort:
+    if _CONNECTORS_MODE != "stub":
+        raise NotImplementedError(
+            f"Prod law source adapter not implemented (mode={_CONNECTORS_MODE})"
+        )
+    return StubLawSource()

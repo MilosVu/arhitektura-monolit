@@ -20,6 +20,7 @@ def create_celery_app(app_name: str, include: list[str] | None = None) -> Celery
         task_track_started=True,
         task_routes={
             "module_dms_sync.tasks.*": {"queue": "sync"},
+            "module_law_sync.tasks.*": {"queue": "sync"},
             "module_ingestion.tasks.*": {"queue": "ingestion"},
         },
     )

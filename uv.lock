@@ -20,6 +20,7 @@ members = [
     "module-dms-sync",
     "module-documents",
     "module-ingestion",
+    "module-law-sync",
     "module-platform",
     "module-sync",
     "sync-worker",
@@ -404,6 +405,7 @@ dependencies = [
     { name = "module-ai" },
     { name = "module-chat" },
     { name = "module-documents" },
+    { name = "module-law-sync" },
     { name = "module-platform" },
     { name = "module-sync" },
     { name = "neo4j" },
@@ -421,6 +423,7 @@ requires-dist = [
     { name = "module-ai", editable = "packages/module-ai" },
     { name = "module-chat", editable = "packages/module-chat" },
     { name = "module-documents", editable = "packages/module-documents" },
+    { name = "module-law-sync", editable = "packages/module-law-sync" },
     { name = "module-platform", editable = "packages/module-platform" },
     { name = "module-sync", editable = "packages/module-sync" },
     { name = "neo4j", specifier = ">=5.0" },
@@ -1221,6 +1224,29 @@ requires-dist = [
 ]
 
 [[package]]
+name = "module-law-sync"
+version = "0.1.0"
+source = { editable = "packages/module-law-sync" }
+dependencies = [
+    { name = "celery" },
+    { name = "cortex-connectors" },
+    { name = "cortex-core" },
+    { name = "cortex-models" },
+    { name = "fastapi" },
+    { name = "python-jose", extra = ["cryptography"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "celery", specifier = ">=5.3" },
+    { name = "cortex-connectors", editable = "libs/cortex-connectors" },
+    { name = "cortex-core", editable = "libs/cortex-core" },
+    { name = "cortex-models", editable = "libs/cortex-models" },
+    { name = "fastapi", specifier = ">=0.115" },
+    { name = "python-jose", extras = ["cryptography"], specifier = ">=3.3" },
+]
+
+[[package]]
 name = "module-platform"
 version = "0.1.0"
 source = { editable = "packages/module-platform" }
@@ -1924,6 +1950,7 @@ dependencies = [
     { name = "celery" },
     { name = "cortex-core" },
     { name = "module-dms-sync" },
+    { name = "module-law-sync" },
 ]
 
 [package.metadata]
@@ -1931,6 +1958,7 @@ requires-dist = [
     { name = "celery", specifier = ">=5.3" },
     { name = "cortex-core", editable = "libs/cortex-core" },
     { name = "module-dms-sync", editable = "packages/module-dms-sync" },
+    { name = "module-law-sync", editable = "packages/module-law-sync" },
 ]
 
 [[package]]

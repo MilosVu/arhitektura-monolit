@@ -20,3 +20,21 @@ class SyncJobStatus(str, enum.Enum):
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
+
+
+class LawJurisdiction(str, enum.Enum):
+    FEDERAL = "federal"
+    CANTONAL = "cantonal"
+
+
+class LawSourceType(str, enum.Enum):
+    FEDLEX_API = "fedlex_api"
+    SCRAPER = "scraper"
+    STUB = "stub"
+
+
+class LawSyncJobStatus(str, enum.Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"

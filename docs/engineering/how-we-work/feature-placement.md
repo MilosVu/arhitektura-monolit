@@ -15,8 +15,9 @@ Before writing code, answer: **which domain owns this feature**. If unsure, use 
 | Chat thread, messages, Redis | `module-chat` | `adapters/redis_chat_store.py`, `routes/chat.py` |
 | Sync job creation, polling, orchestrator | `module-sync` | `services/sync_orchestrator.py`, `routes/sync.py` |
 | DMS download, delta sync, blob | `module-dms-sync` | `tasks.py`, `services/`, `cortex-connectors` |
-| OCR, chunk, embed, Weaviate write | `module-ingestion` | `tasks.py`, `services/pipeline.py` |
-| RAG search, law lookup, translate, agents | `module-ai` | `agents/`, `routes/rag.py`, ... |
+| OCR, chunk, embed, Weaviate write (case docs) | `module-ingestion` | `tasks.py`, `services/pipeline.py` |
+| Swiss law fetch, version, MD archive, law graph/index write | `module-law-sync` | `tasks.py`, `services/law_corpus_sync.py` |
+| RAG search, law lookup (read), translate, agents | `module-ai` | `agents/`, `routes/rag.py`, `routes/laws.py` |
 | New ORM entity / column | `cortex-models` | `cortex_models/*.py` — **never** new ORM in `module_*` |
 | HTTP DTO (request/response) | owning module | `module_*/schemas/` — not in `module-platform` for documents/chat/sync |
 | New port (interface) | `cortex-core` | `cortex_core/ports/` |
@@ -34,7 +35,8 @@ Before writing code, answer: **which domain owns this feature**. If unsure, use 
 | `/cases/{id}/documents`, `/documents/{id}` | `module-documents` |
 | `/chat/*` | `module-chat` |
 | `/cases/{id}/sync`, `/sync/{job_id}` | `module-sync` |
-| RAG, laws, translate | `module-ai` |
+| RAG, laws (read), translate | `module-ai` |
+| Law sync jobs, corpus delta | `module-law-sync` |
 
 Do **not** move documents/chat/sync back into the `module-platform` router.
 
@@ -49,9 +51,9 @@ Do **not** move documents/chat/sync back into the `module-platform` router.
 
 ## New Celery step — checklist
 
-1. Sync (I/O) → `module-dms-sync`; CPU/GPU pipeline → `module-ingestion`.
+1. DMS download (I/O) → `module-dms-sync`; OCR/embed pipeline (CPU/GPU) → `module-ingestion`; law corpus sync (I/O) → `module-law-sync`.
 2. Task function in `tasks.py`; name from `cortex_core.messaging.tasks`.
-3. Document status: `DocumentsModule.mark_*()` — no direct ORM write.
+3. Document status: `DocumentsModule.mark_*()` — no direct ORM write. Law versions: `LawVersionService` in `module-law-sync` only.
 4. Enqueue next step: `celery_app.send_task(TASK_..., queue=...)`.
 5. `make lint-imports`.
 
@@ -62,6 +64,9 @@ Do **not** move documents/chat/sync back into the `module-platform` router.
 - `from module_ingestion.services...` from dms-sync (use Celery task)
 - Business logic in `cortex-server/main.py`
 - Duplicated ORM model in a worker package
+- Law ingestion in `module-ai` or `module-ingestion` → **STOP** → `module-law-sync`
+- Law chunks in `DocumentChunk` collection → **STOP** → Weaviate `LawChunk` + `LawSearchPort`
+- `module-ai` importing `module-law-sync` → **STOP** → read via ports / shared stores only
 
 ## Example: add re-ingest document endpoint
 

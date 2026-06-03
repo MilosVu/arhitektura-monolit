@@ -10,6 +10,7 @@ dependencies = [
     "module-documents",
     "module-chat",
     "module-sync",
+    "module-law-sync",
     "module-ai",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
@@ -26,6 +27,7 @@ module-platform = { workspace = true }
 module-documents = { workspace = true }
 module-chat = { workspace = true }
 module-sync = { workspace = true }
+module-law-sync = { workspace = true }
 module-ai = { workspace = true }
 
 [build-system]
